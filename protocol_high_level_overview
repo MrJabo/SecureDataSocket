@@ -1,0 +1,37 @@
+Let H be a collision resistent hash function (e.g. SHA-512 is collision resistent for 256 bits (32 byte)) and h a two universal hash function (e.g. h := Ax + B). Let g be a HMac function with security parameter (0,1)^k. Notation: g(x,m) is the tag t for message m with security parameter x.
+
+Commitment scheme:
+Let c be the commitment and d be the decommitment:
+
+
+A <- (0,1)^n
+x <- (0,1)^n
+m <- (0,1)^n
+B:= m - Ax
+h:=Az + B (mod n)
+c:=<H(x),A,B,g(x,(H(x)||A||B))>
+
+Decommiment:
+d:=<x>
+
+
+
+Protocol:
+Setup:
+
+Alice:
+create <c_A,d_A> with random A,x and message m
+Bob:
+create <c_B,d_B> with random A,x and message m
+
+Alice ----------- "Ready" ---------> Bob
+Alice <---------- "ACK" ------------ Bob
+Alice <---------- "Ready" ---------- Bob
+Alice ----------- "ACK" -----------> Bob
+
+Commitmentexchange:
+
+Alice ----------- c_A -------------> Bob
+Alice <---------- c_B -------------- Bob
+Alice ----------- d_A -------------> Bob
+Alice <---------- d_B -------------- Bob

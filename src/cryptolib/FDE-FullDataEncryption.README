@@ -1,0 +1,1 @@
+this socket is using CryptoSocket to let the user send any String, int, Serializable, etc. in packtes with the same size.
