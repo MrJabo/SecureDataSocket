@@ -21,13 +21,13 @@ public class FDESocket {
 	public /*static*/ final int PACKET_SIZE;
 	private CryptoSocket cryptoSocket;
 	
-	public FDESocket(CryptoSocketInterface.Channel c, String id, int payloadSize) throws IllegalArgumentException{
+	/*public FDESocket(CryptoSocketInterface.Channel c, String id, int payloadSize) throws IllegalArgumentException{
 		this.PAYLOAD_SIZE = payloadSize;
 		this.PACKET_SIZE = PAYLOAD_SIZE+2;
 		if (PAYLOAD_SIZE > 32767)
 			throw new IllegalArgumentException("to large PAYLOAD_SIZE");
 		cryptoSocket = new CryptoSocket(c, id);
-	}
+	}*/
 	
 	public FDESocket(CryptoSocketInterface.Channel c, int payloadSize) throws IllegalArgumentException{
 		this.PAYLOAD_SIZE = payloadSize;
@@ -37,9 +37,9 @@ public class FDESocket {
 		cryptoSocket = new CryptoSocket(c);
 	}
 	
-	public FDESocket(CryptoSocketInterface.Channel c, String id) throws IllegalArgumentException{
+	/*public FDESocket(CryptoSocketInterface.Channel c, String id) throws IllegalArgumentException{
 		this(c, id, 1024);
-	}
+	}*/
 
 	public FDESocket(CryptoSocketInterface.Channel c) throws IllegalArgumentException{
 		this(c, 1024);
@@ -56,6 +56,14 @@ public class FDESocket {
 	public byte[] getOOB() throws IllegalStateException {
 		return cryptoSocket.getOOB();
 	}
+
+	public String createSharedSecret() throws IllegalArgumentException {
+		return cryptoSocket.createSharedSecret();
+	}
+
+	//public void setSharedSecret(byte [] sharedSecret) throws IllegalArgumentException {
+	//	cryptoSocket.setSharedSecret(sharedSecret);
+	//}
 
 	public void verifiedOOB() throws IllegalStateException{
 		cryptoSocket.verifiedOOB();
@@ -148,6 +156,10 @@ public class FDESocket {
 		// Get the bytes of the serialized object
 		byte[] buf = bos.toByteArray();
 		return write(buf);
+	}
+
+	public void close(){
+		this.cryptoSocket.close();
 	}
 
 	private byte[][] splitUp(byte[] array){

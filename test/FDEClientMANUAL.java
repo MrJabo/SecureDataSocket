@@ -5,10 +5,12 @@ import cryptolib.CryptoSocket;
 import cryptolib.FDESocket;
 import java.util.Arrays;
 
-public class FDEClient{
+public class FDEClientMANUAL{
 	public static void main(String [] args){
 		try{
-			FDESocket cs = new FDESocket(new Channel(ChannelType.WLAN, "127.0.0.1:4711"));
+			/*FDESocket cs = new FDESocket(new Channel(ChannelType.MANUAL, "127.0.0.1:4711"));
+			//never call setSharedSecret on both sides
+			cs.setSharedSecret("00000000000000000000000000000000".getBytes());
 			boolean test = cs.connect();
 			if (!test){
 				System.out.println("Failed!");
@@ -18,8 +20,7 @@ public class FDEClient{
 			byte[] testb = cs.read();
 			System.out.println("Read!");
 			System.out.println(new String(testb));
-			//never do this! check OOB before verifying
-			cs.verifiedOOB();
+			//cs.verifiedOOB();
 			System.out.println("Write: "+cs.write("Hallo"));
 			int i = cs.readInt();
 			System.out.println("Read!");
@@ -27,7 +28,7 @@ public class FDEClient{
 			System.out.println("Write: "+cs.write(3.45f));
 			System.out.println("Read!");
 			System.out.println(cs.readDouble());
-			System.out.println("Write: "+cs.write(new SerializationObject(5)));
+			System.out.println("Write: "+cs.write(new SerializationObject(5)));*/
 		} catch(Exception e){
 			e.printStackTrace();
 		}

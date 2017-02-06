@@ -1,11 +1,13 @@
 import cryptolib.CryptoSocketInterface;
+import cryptolib.CryptoSocketInterface.Channel;
+import cryptolib.CryptoSocketInterface.ChannelType;
 import cryptolib.CryptoSocket;
 import java.util.Arrays;
 
 public class Client{
 	public static void main(String [] args){
 		try{
-			CryptoSocket cs = new CryptoSocket(CryptoSocketInterface.Channel.WLAN, "127.0.0.1:4711");
+			CryptoSocket cs = new CryptoSocket(new Channel(ChannelType.WLAN, "127.0.0.1:4711"));
 			boolean test = cs.connect();
 			if (!test){
 				System.out.println("Failed!");

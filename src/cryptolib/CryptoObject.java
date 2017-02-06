@@ -213,7 +213,7 @@ public class CryptoObject {
 	/**
 	* Performs ECDH
 	*/
-	public void createSharedEncKey(ECPublicKey key) throws IllegalArgumentException, IllegalArgumentException {
+	public void createSharedEncKey(ECPublicKey key) throws IllegalArgumentException {
 		try {
 			X9ECParameters ecP = CustomNamedCurves.getByName(curve);
 			ECDomainParameters ecdp = new ECDomainParameters(ecP.getCurve(), ecP.getG(), ecP.getN(), ecP.getH());
@@ -242,6 +242,37 @@ public class CryptoObject {
 			throw new IllegalArgumentException("Invalid padding algorithm!");
 		} 
 	}
+
+
+	/**
+	 * set a already known sharedsecret, instead of using commitment to create one
+	 * */
+	public void setSharedSecret(byte[] sharedSecret) throws IllegalArgumentException {
+		if (sharedSecret.length != 32){
+			throw new IllegalArgumentException("invalid sharedSecret-size; has to have a length of 32 bytes");
+		}
+		try {
+			byte[] byteSharedSecretInner = new byte[sharedSecret.length/2];
+			byte[] byteSharedSecretOuter = new byte[sharedSecret.length/2];
+			System.arraycopy(sharedSecret, 0, byteSharedSecretInner, 0, byteSharedSecretInner.length);
+			System.arraycopy(sharedSecret, byteSharedSecretInner.length, byteSharedSecretOuter, 0, byteSharedSecretOuter.length);
+			this.sharedSecretOuter = new SecretKeySpec(byteSharedSecretOuter, "AES");
+			this.sharedSecretInner = new SecretKeySpec(byteSharedSecretInner, "AES");
+			this.has_symmetric_key = true;
+			this.encInner = Cipher.getInstance("AES/GCM/NoPadding");
+			this.encOuter = Cipher.getInstance("AES/GCM/NoPadding");
+			this.decInner = Cipher.getInstance("AES/GCM/NoPadding");
+			this.decOuter = Cipher.getInstance("AES/GCM/NoPadding");
+		} catch(IllegalStateException is){
+			throw new IllegalArgumentException("ERROR unable to create shared encryption key, wrong state!");
+		} catch(NoSuchAlgorithmException nsa){
+			throw new IllegalArgumentException("Encryption algorithm not found!");
+		} catch (NoSuchPaddingException nsp){
+			throw new IllegalArgumentException("Invalid padding algorithm!");
+		}
+		
+	}
+
 
 	/**
 	* Encrypt data with AES-GCM mode.

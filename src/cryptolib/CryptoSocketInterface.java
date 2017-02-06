@@ -6,8 +6,52 @@ import java.io.IOException;
 
 public interface CryptoSocketInterface {
 
-	public enum Channel {
-		WLAN;
+	public enum ChannelType {
+		/**
+		 * A Commitmentscheme will be used to create a sharedSecret. Therefore a OOB is created. which has to be compared.
+		 * Method to get the OOB is called getOOB().
+		 * Method to sign the OOBs of both sides equal is verifiedOOB().
+		 * These Methods have to be called AFTER a networkconnection has been established (via listen or connect), because the connection will be required for the commitmentscheme.
+		 * The networkconnection will be fully usable after verifiedOOB() has been called.
+		 *
+		 * Methods setSharedSecret(byte[] sharedSecret) and createSharedSecret() will be unnecassary here.
+		 * */
+		WLAN, 
+		/**
+		 * A sharedSecret will be created and given to the user. The User has to transfer it securely (!!!) to the partnerdevice.
+		 * Once a sharedSecret is known by both devices a networkconnection can be established. I.e. a sharedSecret has not to be created on both sides.
+		 * Method to create the sharedSecret is called createSharedSecret().
+		 * Method to set the sharedSecret in the partnerdevice is called setSharedSecret(byte[] sharedSecret).
+		 * These Methods have to be called BEFORE a networkconnection has been established (via listen or connect), because the sharedSecret will be used for the Crypto.
+		 * The networkconnection will be fully usable afert it has been established.
+		 * 
+		 * Methods getOOB() and verifiedOOB() will be unnecassary here.
+		 * */
+		MANUAL;	
+	}
+
+	public class Channel {
+		/**
+		 * definitions of id.
+		 *
+		 *  ChannelType | id                          | Description
+		 * -------------+-----------------------------+--------------------------------------------
+		 *  WLAN        | ipAddress:Port              | OOBChannel and networkChannel are the same.
+		 *              |                             | ipAddress is optional in future versions 
+		 *              |                             | beause then the partnerdevice may be found 
+		 *              |                             | via broadcast.
+		 *              |                             |
+		 *  MANUAL      | ipAddress:Port:sharedSecret | only the networkChannel is defined here.
+		 *              |                             | If used as a client the sharedSecret has to
+		 *              |                             | be set.
+		 * */
+		public final String id;
+		public final ChannelType type; 
+
+		public Channel(ChannelType type, String id) {
+			this.id = id;
+			this.type = type;
+		}
 	}
 
 	public enum RETURN {
@@ -36,6 +80,13 @@ public interface CryptoSocketInterface {
 	*/
 	SocketAddress listen(int port) throws IOException, SocketTimeoutException; //blocking until connection is established
 
+
+	/**
+	 * Same as listen(int port). Except choosing port outof Channel.id.
+	 * */
+	//SocketAddress listen() throws IOException, SocketTimeoutException; //blocking until connection is established
+
+
 	/**
 	* Connect to a device, which awaits a connection and called listen().
 	* Throws SocketTimeoutException when connection timedout, IllegalArgumentException when the 
@@ -48,6 +99,7 @@ public interface CryptoSocketInterface {
 	* Return the OutOfBand information.
 	* IMPORTANT: This has to be the same between both 
 	* communicationpartners. If it differs, NEVER call verifiedOOB()!
+	* Usable with ChannelType.WLAN
 	*/
 	byte[] getOOB() throws IllegalStateException;
 	
@@ -58,8 +110,22 @@ public interface CryptoSocketInterface {
 	* communicationpartner is the one you expect. If you call verifiedOOB() 
 	* though your verificationresult is false, an adversary will be able to
 	* read and manipulate your communication.
+	* Usable with ChannelType.WLAN
 	*/
 	void verifiedOOB() throws IllegalStateException;
+
+	/**
+	 * Sets the SharedSecret.
+	 * This has to be used if the channel MANUAL is used and you will not create a sharedSecret.
+	 * */
+	//void setSharedSecret(byte[] sharedSecret) throws IllegalArgumentException; // <--- private now, because used in connect internaly
+
+	/**
+	 * Creates and sets a sharedSecret. 
+	 * It will be returned, so the user can transfer it to the communicationpartner and set it there.
+	 * I.e. channel MANUAL has to be used.
+	 * */
+	String createSharedSecret() throws IllegalArgumentException;
 
 	/**
 	* Sends the given bytearray to the communicatonpartner.

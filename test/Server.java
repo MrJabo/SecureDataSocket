@@ -1,4 +1,6 @@
 import cryptolib.CryptoSocketInterface;
+import cryptolib.CryptoSocketInterface.Channel;
+import cryptolib.CryptoSocketInterface.ChannelType;
 import cryptolib.CryptoSocket;
 import java.security.Security;
 import java.util.Arrays;
@@ -6,7 +8,7 @@ import java.util.Arrays;
 public class Server{
 	public static void main(String [] args){
 		try{
-			CryptoSocket cs = new CryptoSocket(CryptoSocketInterface.Channel.WLAN);
+			CryptoSocket cs = new CryptoSocket(new Channel(ChannelType.WLAN,""));
 			cs.listen(4711);
 			cs.verifiedOOB();
 			System.out.println("Write: "+cs.write("Hallo Client!".getBytes()));
