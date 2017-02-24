@@ -1,4 +1,4 @@
-package cryptolib;
+package com.cryptolib;
 
 public class UnverifiedException extends Exception {
 

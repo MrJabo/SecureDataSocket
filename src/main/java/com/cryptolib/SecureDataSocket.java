@@ -1,8 +1,8 @@
-package cryptolib;
+package com.cryptolib;
 
-import cryptolib.FDESocket;
-import cryptolib.CryptoSocketInterface.Channel;
-import cryptolib.CryptoSocketInterface.ChannelType;
+import com.cryptolib.FDESocket;
+import com.cryptolib.CryptoSocketInterface.Channel;
+import com.cryptolib.CryptoSocketInterface.ChannelType;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.SocketAddress;

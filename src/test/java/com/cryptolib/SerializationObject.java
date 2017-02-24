@@ -1,3 +1,5 @@
+package com.cryptolib;
+
 import java.io.Serializable;
 
 public class SerializationObject implements Serializable {

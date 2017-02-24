@@ -1,4 +1,5 @@
-package cryptolib;
+package com.cryptolib;
+
 import java.lang.IllegalStateException;
 import java.net.SocketTimeoutException;
 import java.net.SocketAddress;

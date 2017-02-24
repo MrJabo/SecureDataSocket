@@ -1,4 +1,4 @@
-package cryptolib;
+package com.cryptolib;
 
 import java.lang.IllegalArgumentException;
 import java.lang.IllegalStateException;

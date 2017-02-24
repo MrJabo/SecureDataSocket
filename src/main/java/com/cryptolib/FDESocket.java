@@ -1,8 +1,8 @@
-package cryptolib;
+package com.cryptolib;
 
-import cryptolib.CryptoSocket;
-import cryptolib.CryptoSocketInterface;
-import cryptolib.CryptoSocketInterface.RETURN;
+import com.cryptolib.CryptoSocket;
+import com.cryptolib.CryptoSocketInterface;
+import com.cryptolib.CryptoSocketInterface.RETURN;
 import java.security.SecureRandom;
 import java.io.IOException;
 import java.io.Serializable;

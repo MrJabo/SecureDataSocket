@@ -1,24 +1,27 @@
-import cryptolib.CryptoSocketInterface;
-import cryptolib.CryptoSocketInterface.Channel;
-import cryptolib.CryptoSocketInterface.ChannelType;
-import cryptolib.CryptoSocket;
-import cryptolib.SecureDataSocket;
+package com.cryptolib;
+
+import com.cryptolib.CryptoSocketInterface;
+import com.cryptolib.CryptoSocketInterface.Channel;
+import com.cryptolib.CryptoSocketInterface.ChannelType;
+import com.cryptolib.CryptoSocket;
+import com.cryptolib.FDESocket;
 import java.util.Arrays;
 
-public class SecureDataSocketClientQR{
+public class FDEClient{
 	public static void main(String [] args){
 		try{
-			SecureDataSocket cs = new SecureDataSocket(4711);
-			cs.setupClientWithCamera("192.168.178.34:4711:4Viw9UKdulNLSaxMujQ2/h9vogsfWp+d9D56XVJkYSk=");
-			/*if (!test){
+			FDESocket cs = new FDESocket(new Channel(ChannelType.WLAN, "127.0.0.1:4711"));
+			boolean test = cs.connect();
+			if (!test){
 				System.out.println("Failed!");
 				return;
-			}*/
+			}
 
 			byte[] testb = cs.read();
 			System.out.println("Read!");
 			System.out.println(new String(testb));
-			//cs.verifiedOOB();
+			//never do this! check OOB before verifying
+			cs.verifiedOOB();
 			System.out.println("Write: "+cs.write("Hallo"));
 			int i = cs.readInt();
 			System.out.println("Read!");

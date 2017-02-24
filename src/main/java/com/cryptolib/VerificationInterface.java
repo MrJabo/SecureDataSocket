@@ -1,4 +1,6 @@
+package com.cryptolib;
 
+import java.io.Serializable;
 
 public interface VerificationInterface {
 	

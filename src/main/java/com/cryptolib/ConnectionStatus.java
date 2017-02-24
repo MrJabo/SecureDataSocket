@@ -1,3 +1,4 @@
+package com.cryptolib;
 
 public enum ConnectionStatus {
 	NotSetup,

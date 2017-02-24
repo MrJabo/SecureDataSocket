@@ -1,7 +1,9 @@
-import cryptolib.CryptoSocketInterface;
-import cryptolib.CryptoSocketInterface.Channel;
-import cryptolib.CryptoSocketInterface.ChannelType;
-import cryptolib.CryptoSocket;
+package com.cryptolib;
+
+import com.cryptolib.CryptoSocketInterface;
+import com.cryptolib.CryptoSocketInterface.Channel;
+import com.cryptolib.CryptoSocketInterface.ChannelType;
+import com.cryptolib.CryptoSocket;
 import java.security.Security;
 import java.util.Arrays;
 

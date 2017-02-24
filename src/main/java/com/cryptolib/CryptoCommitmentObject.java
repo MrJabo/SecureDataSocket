@@ -1,4 +1,4 @@
-package cryptolib;
+package com.cryptolib;
 
 import java.security.SecureRandom;
 import java.security.InvalidKeyException;
