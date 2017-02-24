@@ -73,7 +73,7 @@ public class SecureDataSocket {
 	 *
 	 * returns the connectiondetails and the sharedSecret, that has to be transferred securely to the client by the user.
 	 * */
-	public String prepareServerWithClientCamera() throws UnknownHostException {
+	public String prepareServerWithClientCamera() throws IOException {
 		this.socket = new FDESocket(new Channel(ChannelType.MANUAL, "::"));
 		return Inet4Address.getLocalHost().getHostAddress()+":"+this.port+":"+this.socket.createSharedSecret();
 	}

@@ -14,8 +14,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import javax.crypto.IllegalBlockSizeException;
 import java.security.SecureRandom;
-import java.util.Base64;
-
 
 public class CryptoSocket implements CryptoSocketInterface {
 		private Channel channel = null;
@@ -438,23 +436,24 @@ public class CryptoSocket implements CryptoSocketInterface {
 			}
 		}
 
-		private void setSharedSecret(String sharedSecret) throws IllegalArgumentException {
+		private void setSharedSecret(String sharedSecret) throws IllegalArgumentException, IOException {
 			if (this.channel.type != ChannelType.MANUAL)
 				throw new IllegalArgumentException("only usable with ChannelType.MANUAL");
 			this.cobject = new CryptoObject();
-			byte[] byteSharedSecret = Base64.getDecoder().decode(sharedSecret);
+			//byte[] byteSharedSecret = Base64.getDecoder().decode(sharedSecret);
+			byte[] byteSharedSecret = new sun.misc.BASE64Decoder().decodeBuffer(sharedSecret);
 			this.cobject.setSharedSecret(byteSharedSecret);
 			this.verified = true;
 		}
 
-		public String createSharedSecret() throws IllegalArgumentException {
+		public String createSharedSecret() throws IllegalArgumentException, IOException {
 			if (this.channel.type != ChannelType.MANUAL)
 				throw new IllegalArgumentException("only usable with ChannelType.MANUAL");
 			//create sharedsecret
 			byte[] byteSharedSecret = new byte[32];
 			SecureRandom rand = new SecureRandom();
 			rand.nextBytes(byteSharedSecret);
-			String sharedSecret = Base64.getEncoder().encodeToString(byteSharedSecret);
+			String sharedSecret = new sun.misc.BASE64Encoder().encode(byteSharedSecret);
 			//set sharedsecret
 			this.setSharedSecret(sharedSecret);
 			return sharedSecret;

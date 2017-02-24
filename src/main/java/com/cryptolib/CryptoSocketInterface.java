@@ -126,7 +126,7 @@ public interface CryptoSocketInterface {
 	 * It will be returned, so the user can transfer it to the communicationpartner and set it there.
 	 * I.e. channel MANUAL has to be used.
 	 * */
-	String createSharedSecret() throws IllegalArgumentException;
+	String createSharedSecret() throws IllegalArgumentException, IOException;
 
 	/**
 	* Sends the given bytearray to the communicatonpartner.

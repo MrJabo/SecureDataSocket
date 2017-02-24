@@ -57,7 +57,7 @@ public class FDESocket {
 		return cryptoSocket.getOOB();
 	}
 
-	public String createSharedSecret() throws IllegalArgumentException {
+	public String createSharedSecret() throws IllegalArgumentException, IOException {
 		return cryptoSocket.createSharedSecret();
 	}
 
