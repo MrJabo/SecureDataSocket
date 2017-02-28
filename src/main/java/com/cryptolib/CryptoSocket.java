@@ -1,5 +1,7 @@
 package com.cryptolib;
 
+import org.bouncycastle.util.encoders.Base64;
+
 import java.lang.IllegalArgumentException;
 import java.lang.IllegalStateException;
 import java.net.SocketTimeoutException;
@@ -440,8 +442,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 			if (this.channel.type != ChannelType.MANUAL)
 				throw new IllegalArgumentException("only usable with ChannelType.MANUAL");
 			this.cobject = new CryptoObject();
-			//byte[] byteSharedSecret = Base64.getDecoder().decode(sharedSecret);
-			byte[] byteSharedSecret = new sun.misc.BASE64Decoder().decodeBuffer(sharedSecret);
+			byte[] byteSharedSecret = Base64.decode(sharedSecret);
 			this.cobject.setSharedSecret(byteSharedSecret);
 			this.verified = true;
 		}
@@ -453,7 +454,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 			byte[] byteSharedSecret = new byte[32];
 			SecureRandom rand = new SecureRandom();
 			rand.nextBytes(byteSharedSecret);
-			String sharedSecret = new sun.misc.BASE64Encoder().encode(byteSharedSecret);
+			String sharedSecret = Base64.toBase64String(byteSharedSecret);
 			//set sharedsecret
 			this.setSharedSecret(sharedSecret);
 			return sharedSecret;
