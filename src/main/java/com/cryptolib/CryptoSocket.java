@@ -559,8 +559,12 @@ public class CryptoSocket implements CryptoSocketInterface {
 			this.running = false;
 
 			try{
-				this.socket.close();
-				this.server.close();
+				if (this.socket != null){
+					this.socket.close();
+				}
+				if (this.server != null){
+					this.server.close();
+				}
 			} catch(IOException ioe){}
 
 			this.socket = null;
