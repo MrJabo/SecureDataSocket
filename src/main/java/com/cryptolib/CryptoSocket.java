@@ -2,7 +2,7 @@ package com.cryptolib;
 
 import org.bouncycastle.util.encoders.Base64;
 
-import java.lang.IllegalArgumentException;
+//import java.lang.IllegalArgumentException;
 import java.lang.IllegalStateException;
 import java.net.SocketTimeoutException;
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 			this.channel = channel;
 		}
 
-		public SocketAddress listen(int port) throws IOException, SocketTimeoutException {
+		public SocketAddress listen(int port) throws IOException, SocketTimeoutException, CryptoSocketException {
 			if (this.channel.type == ChannelType.WLAN){
 				this.server = new ServerSocket(port);
 				this.createCryptoObject();
@@ -92,13 +92,13 @@ public class CryptoSocket implements CryptoSocketInterface {
 			}
 			if (this.channel.type == ChannelType.MANUAL) {
 				if (!this.verified) {
-					throw new IllegalArgumentException("call setSharedSecret or createSharedSecret before listen, if the ChannelType MANUAL is used.");
+					throw new CryptoSocketException("call setSharedSecret or createSharedSecret before listen, if the ChannelType MANUAL is used.");
 				}
 				else {	
 					this.server = new ServerSocket(port);
 					this.running = true;
 					while(this.running){
-						while (true){
+						while (this.running){
 							this.socket = this.server.accept();
 
 							if (!(this.channel.id.equals("") || this.channel.id.equals(":") || this.channel.id.equals("::")) && !this.channel.id.equals(socket.getRemoteSocketAddress().toString())){
@@ -114,7 +114,30 @@ public class CryptoSocket implements CryptoSocketInterface {
 						this.out = this.socket.getOutputStream();
 						this.in = this.socket.getInputStream();
 						this.connected = true;
-						//TODO add check if the same sharedSecret was used
+						//check if the same sharedSecret was used
+						byte[] check = new byte[1];
+						new SecureRandom().nextBytes(check);
+						try{
+							this.write(check);
+						}
+						catch(UnverifiedException e){	
+							throw new CryptoSocketException("impossible Error while sharedSecret check");
+						}
+						byte[] ans = new byte[1];
+						this.read(true, ans);
+						byte[] check2 = new byte[1];
+						this.read(true, check2);
+						check2[0] += 1;
+						try{
+							this.write(check2);
+						}
+						catch(UnverifiedException e){	
+							throw new CryptoSocketException("impossible Error while sharedSecret check");
+						}
+						if (check[0]+1 != ans[0]) {
+							this.connected = false;
+							throw new CryptoSocketException("not the same sharedSecret is used. maybe the wrong device connected to you");
+						}
 						break;
 					}
 					return this.socket.getRemoteSocketAddress();
@@ -123,7 +146,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 			return null;
 		}
 
-		public boolean connect() throws IllegalArgumentException, IOException, SocketTimeoutException {
+		public boolean connect() throws CryptoSocketException, IOException, SocketTimeoutException {
 			if (this.channel.type == ChannelType.WLAN){
 				this.createCryptoObject();
 
@@ -131,14 +154,14 @@ public class CryptoSocket implements CryptoSocketInterface {
 					String tmp = new StringBuilder(this.channel.id).reverse().toString();
 
 					if (!tmp.contains(":")){
-						throw new IllegalArgumentException("ERROR for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
+						throw new CryptoSocketException("for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
 					}
 
 					String[] stringParts = tmp.split(":", 2);
 
 
 					if (2 != stringParts.length){
-						throw new IllegalArgumentException("ERROR for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
+						throw new CryptoSocketException("for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
 					}
 
 					stringParts[0] = new StringBuilder(stringParts[0]).reverse().toString();
@@ -150,7 +173,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 					try {
 						address = new InetSocketAddress(serveraddress, Integer.parseInt(port));
 					} catch (Exception e) {
-						throw new IllegalArgumentException("ERROR for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
+						throw new CryptoSocketException("for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
 					}
 
 					this.socket = new Socket(address.getHostString(), address.getPort());
@@ -158,7 +181,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 					//Search server via broadcast
 					//TODO implement
 					//while not implemented throw Exception
-					throw new IllegalArgumentException("Serversearch via broadcast is not implemented at the Moment.");
+					throw new CryptoSocketException("Serversearch via broadcast is not implemented at the Moment.");
 				}
 
 				// begin crypto protocol
@@ -181,14 +204,14 @@ public class CryptoSocket implements CryptoSocketInterface {
 					String tmp = new StringBuilder(this.channel.id).reverse().toString();
 
 					if (!tmp.contains(":")){
-						throw new IllegalArgumentException("ERROR for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
+						throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
 					}
 
 					String[] stringParts = tmp.split(":", 3);
 
 
 					if (3 != stringParts.length){
-						throw new IllegalArgumentException("ERROR for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
+						throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
 					}
 
 					stringParts[0] = new StringBuilder(stringParts[0]).reverse().toString();
@@ -202,12 +225,12 @@ public class CryptoSocket implements CryptoSocketInterface {
 					try {
 						address = new InetSocketAddress(serveraddress, Integer.parseInt(port));
 					} catch (Exception e) {
-						throw new IllegalArgumentException("ERROR for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
+						throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
 					}
 
 					this.socket = new Socket(address.getHostString(), address.getPort());
 				} else {
-					throw new IllegalArgumentException("ERROR for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
+					throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
 				}
 
 				// begin crypto protocol
@@ -215,7 +238,30 @@ public class CryptoSocket implements CryptoSocketInterface {
 				this.out = this.socket.getOutputStream();
 				this.in = this.socket.getInputStream();
 				this.connected = true;
-				//TODO add check if the same sharedSecret was used
+				//check if the same sharedSecret was used
+				byte[] check = new byte[1];
+				this.read(true, check);
+				check[0] += 1;
+				try{
+					this.write(check);
+				}
+				catch(UnverifiedException e){	
+					throw new CryptoSocketException("impossible Error while sharedSecret check");
+				}
+				check = new byte[1];
+				new SecureRandom().nextBytes(check);
+				try{
+					this.write(check);
+				}
+				catch(UnverifiedException e){	
+					throw new CryptoSocketException("impossible Error while sharedSecret check");
+				}
+				byte[] ans = new byte[1];
+				this.read(true, ans);
+				if (ans[0] != check[0]+1){
+					this.connected = false;
+					throw new CryptoSocketException("not the same sharedSecret is used. maybe you connected to the wrong device");
+				}
 				return true;
 			}
 			return false;
@@ -298,7 +344,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 			return true;
 		}
 
-		private boolean exchange() throws IOException{
+		private boolean exchange() throws IOException, CryptoSocketException {
 			byte [] commitment = this.cobject.getCryptoCommitment().getCommitment();
 			byte [] otherCommitment = new byte[this.cobject.getCryptoCommitment().commitmentSize()];
 			this.out.write(commitment);
@@ -343,7 +389,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 
 			try {
 				this.cobject.getCryptoCommitment().addOtherCommitment(otherCommitment);
-			} catch(IllegalArgumentException ia){
+			} catch(CryptoSocketException ia){
 				this.createCryptoObject();
 				return false;
 			}
@@ -390,7 +436,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 			try {
 				System.out.println("Opening..");
 				this.cobject.openCommitmentAndCreateSharedSecret(otherDecommitment);
-			} catch(IllegalArgumentException ia){
+			} catch(CryptoSocketException ia){
 				this.createCryptoObject();
 				ia.printStackTrace();
 				return false;
@@ -407,49 +453,49 @@ public class CryptoSocket implements CryptoSocketInterface {
 			return true;
 		}
 
-		private void createCryptoObject() throws IllegalArgumentException {
+		private void createCryptoObject() throws CryptoSocketException {
 			this.cobject = new CryptoObject();
 			try {
 				this.cobject.createCryptoCommitment();
 			} catch(InvalidKeyException ike){
-				throw new IllegalArgumentException("ERROR cannot create commitment!");
+				throw new CryptoSocketException("cannot create commitment!");
 			} catch(NoSuchAlgorithmException nsa){
-				throw new IllegalArgumentException("Error cannot create commitment!");
+				throw new CryptoSocketException("cannot create commitment!");
 			}
 		}
 
-		public byte[] getOOB() throws IllegalStateException{
+		public byte[] getOOB() throws IllegalStateException, CryptoSocketException {
 			if (this.channel.type != ChannelType.WLAN)	
-				throw new IllegalArgumentException("only usable with ChannelType.WLAN");
+				throw new CryptoSocketException("only usable with ChannelType.WLAN");
 			if (this.connected){
 				return this.cobject.getOOB();
 			} else {
-				throw new IllegalStateException("ERROR not connected, call listen() or connect() first!");
+				throw new IllegalStateException("not connected, call listen() or connect() first!");
 			}
 		}
 
-		public void verifiedOOB() throws IllegalStateException{
+		public void verifiedOOB() throws IllegalStateException, CryptoSocketException{
 			if (this.channel.type != ChannelType.WLAN)	
-				throw new IllegalArgumentException("only usable with ChannelType.WLAN");
+				throw new CryptoSocketException("only usable with ChannelType.WLAN");
 			if (this.connected){
 				this.verified = true;
 			} else {
-				throw new IllegalStateException("ERROR not connected, call listen() or connect() first!");
+				throw new IllegalStateException("not connected, call listen() or connect() first!");
 			}
 		}
 
-		private void setSharedSecret(String sharedSecret) throws IllegalArgumentException, IOException {
+		private void setSharedSecret(String sharedSecret) throws CryptoSocketException, IOException {
 			if (this.channel.type != ChannelType.MANUAL)
-				throw new IllegalArgumentException("only usable with ChannelType.MANUAL");
+				throw new CryptoSocketException("only usable with ChannelType.MANUAL");
 			this.cobject = new CryptoObject();
 			byte[] byteSharedSecret = Base64.decode(sharedSecret);
 			this.cobject.setSharedSecret(byteSharedSecret);
 			this.verified = true;
 		}
 
-		public String createSharedSecret() throws IllegalArgumentException, IOException {
+		public String createSharedSecret() throws CryptoSocketException, IOException {
 			if (this.channel.type != ChannelType.MANUAL)
-				throw new IllegalArgumentException("only usable with ChannelType.MANUAL");
+				throw new CryptoSocketException("only usable with ChannelType.MANUAL");
 			//create sharedsecret
 			byte[] byteSharedSecret = new byte[32];
 			SecureRandom rand = new SecureRandom();
@@ -460,13 +506,13 @@ public class CryptoSocket implements CryptoSocketInterface {
 			return sharedSecret;
 		}
 
-		public int write(byte[] array) throws UnverifiedException, IllegalStateException, IOException{
+		public int write(byte[] array) throws UnverifiedException, IllegalStateException, IOException, CryptoSocketException {
 			if (!this.connected){
-				throw new IllegalStateException("ERROR not connected, call listen() or connect() first!");
+				throw new IllegalStateException("not connected, call listen() or connect() first!");
 			}
 
 			if (!this.verified){
-				throw new UnverifiedException("ERROR you need to verifiy the channel first before you can write data! This channel may not trustworthy!");
+				throw new UnverifiedException("you need to verifiy the channel first before you can write data! This channel may not trustworthy!");
 			}
 
 			byte[] ciphertext = null;
@@ -481,16 +527,16 @@ public class CryptoSocket implements CryptoSocketInterface {
 			return RETURN.SUCCESS.getValue();
 		}
 
-		public int read(boolean blocking, byte [] data) throws IllegalStateException, IllegalArgumentException, IOException {
+		public int read(boolean blocking, byte [] data) throws IllegalStateException, CryptoSocketException, IOException {
 			int readBytes = 0;
 			int totalBytes = 0;
 
 			if (!this.connected){
-				throw new IllegalStateException("ERROR cryptosocket is not connected to communication partner!");
+				throw new IllegalStateException("cryptosocket is not connected to communication partner!");
 			}
 
 			if (null == data){
-				throw new IllegalArgumentException("ERROR null byte array not allowed!");
+				throw new CryptoSocketException("null byte array not allowed!");
 			}
 
 			int size = this.cobject.getOffset() + data.length;
@@ -515,7 +561,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 						try{
 							TimeUnit.SECONDS.sleep(1);
 						} catch(InterruptedException ie){
-							throw new IllegalArgumentException("ERROR Interrupted!");
+							//throw new CryptoSocketException("ERROR Interrupted!");
 						}
 
 						continue;

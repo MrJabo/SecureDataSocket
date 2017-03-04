@@ -62,7 +62,7 @@ public class CryptoObject {
 	* Create a new CryptoObject with encryption asymmetric elliptic curve25519 encryption keypair 
 	* Short authentication byte length is 3 byte.
 	*/
-	public CryptoObject() throws IllegalArgumentException {
+	public CryptoObject() throws CryptoSocketException {
 		this("curve25519", "ECDH", 3, 16, 16);
 	}
 
@@ -76,9 +76,9 @@ public class CryptoObject {
 	* iv_size must be positiv, byte size of iv for encryption scheme
 	* tag_size must be positiv, byte size of tag for encryption scheme
 	*/
-	public CryptoObject(String curve, String enc_algorithm, int shortAuthenticationStringSize, int iv_size, int tag_size) throws IllegalArgumentException{
+	public CryptoObject(String curve, String enc_algorithm, int shortAuthenticationStringSize, int iv_size, int tag_size) throws CryptoSocketException{
 		if (0 >= shortAuthenticationStringSize || 0 >= iv_size || 0 >= tag_size){
-			throw new IllegalArgumentException("shortAuthenticationStringSize,iv_size and tag_size must be a positive number!");
+			throw new CryptoSocketException("shortAuthenticationStringSize,iv_size and tag_size must be a positive number!");
 		}
 
 		try{
@@ -91,15 +91,15 @@ public class CryptoObject {
 			this.encKeypair = g.generateKeyPair();
 
 			if (this.encKeypair == null){
-				throw new IllegalArgumentException("Unable to create new key pair!");
+				throw new CryptoSocketException("Unable to create new key pair!");
 			}
 
 			this.OOB = new byte[shortAuthenticationStringSize];
 			this.random.nextBytes(this.OOB);
 		} catch(NoSuchAlgorithmException nsa){
-			throw new IllegalArgumentException("Algorithm is not supported!");
+			throw new CryptoSocketException("Algorithm is not supported!");
 		} catch(InvalidAlgorithmParameterException iap){
-			throw new IllegalArgumentException("Wrong parameter for algorithm!");
+			throw new CryptoSocketException("Wrong parameter for algorithm!");
 		}
 
 		this.enc_algorithm = enc_algorithm;
@@ -113,13 +113,13 @@ public class CryptoObject {
 	* For e.g. short authentication string this would merge the two strings together, that Alice and Bob should have the same string.
 	* partner string from the other party.
 	*/
-	public void mergeOOB(byte[] partner) throws IllegalArgumentException, IllegalStateException {
+	public void mergeOOB(byte[] partner) throws CryptoSocketException, IllegalStateException {
 		if (this.OOB.length != partner.length){
-			throw new IllegalArgumentException("ERROR out of band challange has not the same length!");
+			throw new CryptoSocketException("out of band challange has not the same length!");
 		}
 
 		if (this.merged){
-			throw new IllegalStateException("ERROR you already merged the OOB challanges! You can't merge them twice!");
+			throw new IllegalStateException("you already merged the OOB challanges! You can't merge them twice!");
 		}
 
 		for(int i = 0; i < this.OOB.length; i++){
@@ -157,7 +157,7 @@ public class CryptoObject {
 	/**
 	* Create new commitment for protocol exchange.
 	*/
-	public void createCryptoCommitment() throws IllegalArgumentException, InvalidKeyException, NoSuchAlgorithmException {
+	public void createCryptoCommitment() throws CryptoSocketException, InvalidKeyException, NoSuchAlgorithmException {
 		BCECPublicKey pk = (BCECPublicKey) (this.encKeypair.getPublic());
 		int publicKeySize = pk.getQ().getEncoded(true).length - 1;
 		byte[] message = new byte[publicKeySize + this.OOB.length];
@@ -176,7 +176,7 @@ public class CryptoObject {
 	/**
 	* Open commitment and extract message to create shared secret.
 	*/
-	public void openCommitmentAndCreateSharedSecret(byte [] decommitment) throws IllegalArgumentException, InvalidKeyException, NoSuchAlgorithmException{
+	public void openCommitmentAndCreateSharedSecret(byte [] decommitment) throws CryptoSocketException, InvalidKeyException, NoSuchAlgorithmException{
 		this.cc.open(decommitment);
 
 		try{
@@ -185,7 +185,7 @@ public class CryptoObject {
 			byte[] message =  this.cc.getOtherMessage();
 
 			if (message.length != publicKeySize + this.OOB.length){
-				throw new IllegalArgumentException("Message size is wrong!");
+				throw new CryptoSocketException("Message size is wrong!");
 			}
 
 			byte[] otherPK = new byte[publicKeySize + 1];
@@ -204,16 +204,16 @@ public class CryptoObject {
 			createSharedEncKey(pk);
 			mergeOOB(otherOOB);
 		} catch(NoSuchAlgorithmException nsa){
-			throw new IllegalArgumentException("Algorithm is not supported!");
+			throw new CryptoSocketException("Algorithm is not supported!");
 		} catch(InvalidKeySpecException iks){
-			throw new IllegalArgumentException("Wrong parameter for algorithm!");
+			throw new CryptoSocketException("Wrong parameter for algorithm!");
 		}
 	}
 
 	/**
 	* Performs ECDH
 	*/
-	public void createSharedEncKey(ECPublicKey key) throws IllegalArgumentException {
+	public void createSharedEncKey(ECPublicKey key) throws CryptoSocketException {
 		try {
 			X9ECParameters ecP = CustomNamedCurves.getByName(curve);
 			ECDomainParameters ecdp = new ECDomainParameters(ecP.getCurve(), ecP.getG(), ecP.getN(), ecP.getH());
@@ -235,11 +235,11 @@ public class CryptoObject {
 			this.decInner = Cipher.getInstance("AES/GCM/NoPadding");
 			this.decOuter = Cipher.getInstance("AES/GCM/NoPadding");
 		} catch(IllegalStateException is){
-			throw new IllegalArgumentException("ERROR unable to create shared encryption key, wrong state!");
+			throw new CryptoSocketException("unable to create shared encryption key, wrong state!");
 		} catch(NoSuchAlgorithmException nsa){
-			throw new IllegalArgumentException("Encryption algorithm not found!");
+			throw new CryptoSocketException("Encryption algorithm not found!");
 		} catch (NoSuchPaddingException nsp){
-			throw new IllegalArgumentException("Invalid padding algorithm!");
+			throw new CryptoSocketException("Invalid padding algorithm!");
 		} 
 	}
 
@@ -247,9 +247,9 @@ public class CryptoObject {
 	/**
 	 * set a already known sharedsecret, instead of using commitment to create one
 	 * */
-	public void setSharedSecret(byte[] sharedSecret) throws IllegalArgumentException {
+	public void setSharedSecret(byte[] sharedSecret) throws CryptoSocketException {
 		if (sharedSecret.length != 32){
-			throw new IllegalArgumentException("invalid sharedSecret-size; has to have a length of 32 bytes");
+			throw new CryptoSocketException("invalid sharedSecret-size; has to have a length of 32 bytes");
 		}
 		try {
 			byte[] byteSharedSecretInner = new byte[sharedSecret.length/2];
@@ -264,11 +264,11 @@ public class CryptoObject {
 			this.decInner = Cipher.getInstance("AES/GCM/NoPadding");
 			this.decOuter = Cipher.getInstance("AES/GCM/NoPadding");
 		} catch(IllegalStateException is){
-			throw new IllegalArgumentException("ERROR unable to create shared encryption key, wrong state!");
+			throw new CryptoSocketException("unable to create shared encryption key, wrong state!");
 		} catch(NoSuchAlgorithmException nsa){
-			throw new IllegalArgumentException("Encryption algorithm not found!");
+			throw new CryptoSocketException("Encryption algorithm not found!");
 		} catch (NoSuchPaddingException nsp){
-			throw new IllegalArgumentException("Invalid padding algorithm!");
+			throw new CryptoSocketException("Invalid padding algorithm!");
 		}
 		
 	}
@@ -279,13 +279,13 @@ public class CryptoObject {
 	* Encrypt data array and returns ciphertext.
 	*/
 
-	public byte[] encrypt(byte [] data) throws IllegalStateException, IllegalArgumentException, IllegalBlockSizeException {
+	public byte[] encrypt(byte [] data) throws IllegalStateException, CryptoSocketException, IllegalBlockSizeException {
 		if (!this.has_symmetric_key){
 			throw new IllegalStateException("Have no symmetric key, you need to create a shared secret first!");
 		}
 
 		if (data == null){
-			throw new IllegalArgumentException("No data found for encryption");
+			throw new CryptoSocketException("No data found for encryption");
 		}
 
 		byte[] ivInner = new byte[this.iv_size];
@@ -309,17 +309,17 @@ public class CryptoObject {
 			System.arraycopy(ivOuter, 0, output, 0, this.iv_size);
 			System.arraycopy(encryptedOuter, 0, output, this.iv_size, encryptedOuter.length);
 		} catch(AEADBadTagException abt){
-			throw new IllegalArgumentException("Decryption exception? Impossible!");
+			throw new CryptoSocketException("Decryption exception? Impossible!");
 		} catch(BadPaddingException bp){
-			throw new IllegalArgumentException("Padding exception? Impossible!");
+			throw new CryptoSocketException("Padding exception? Impossible!");
 		} catch (IllegalStateException ise){
 			throw new IllegalStateException("Wrong AES cipher use!");
 		} catch (InvalidKeyException ik){
 			ik.printStackTrace();
-			throw new IllegalArgumentException("Invalid key for encryption!");
+			throw new CryptoSocketException("Invalid key for encryption!");
 		} catch (InvalidAlgorithmParameterException iap){
 			iap.printStackTrace();
-			throw new IllegalArgumentException("Encryption parameters are wrong!");
+			throw new CryptoSocketException("Encryption parameters are wrong!");
 		}
 
 		return output;
@@ -330,13 +330,13 @@ public class CryptoObject {
 	* Decrypt data array and return message, if tag was valid, otherwise null.
 	*/
 
-	public byte[] decrypt(byte [] data) throws IllegalStateException, IllegalArgumentException, IllegalBlockSizeException {
+	public byte[] decrypt(byte [] data) throws IllegalStateException, CryptoSocketException, IllegalBlockSizeException {
 		if (!this.has_symmetric_key){
 			throw new IllegalStateException("Have no symmetric key, you need to create a shared secret first!");
 		}
 
 		if (data.length <= this.iv_size + this.tag_size || data == null){
-			throw new IllegalArgumentException("The data are too small for a ciphertext!");
+			throw new CryptoSocketException("The data are too small for a ciphertext!");
 		}
 
 		byte[] ivOuter = new byte[this.iv_size];
@@ -358,13 +358,13 @@ public class CryptoObject {
 		} catch (AEADBadTagException abt){
 			return null;
 		} catch (BadPaddingException bp){
-			throw new IllegalArgumentException("Padding exception? Impossible!");
+			throw new CryptoSocketException("Padding exception? Impossible!");
 		} catch (IllegalStateException ibs){
 			throw new IllegalStateException("Wrong AES cipher use!");
 		} catch (InvalidKeyException ik){
-			throw new IllegalArgumentException("Invalid key for decryption!");
+			throw new CryptoSocketException("Invalid key for decryption!");
 		} catch (InvalidAlgorithmParameterException iap){
-			throw new IllegalArgumentException("Decryption parameters are wrong!");
+			throw new CryptoSocketException("Decryption parameters are wrong!");
 		}
 
 		return decryptData;

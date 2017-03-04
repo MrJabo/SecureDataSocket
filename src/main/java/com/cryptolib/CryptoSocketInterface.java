@@ -79,7 +79,7 @@ public interface CryptoSocketInterface {
 	* listen is blocking, until a connection is established
 	* port - On which port server listening. 0 for random
 	*/
-	SocketAddress listen(int port) throws IOException, SocketTimeoutException; //blocking until connection is established
+	SocketAddress listen(int port) throws IOException, SocketTimeoutException, CryptoSocketException; //blocking until connection is established
 
 
 	/**
@@ -90,11 +90,11 @@ public interface CryptoSocketInterface {
 
 	/**
 	* Connect to a device, which awaits a connection and called listen().
-	* Throws SocketTimeoutException when connection timedout, IllegalArgumentException when the 
+	* Throws SocketTimeoutException when connection timedout, CryptoSocketException when the 
 	* destination id is wrong or IOException if socket creation fails
 	* returns if connection is established
 	*/
-	boolean connect() throws IllegalArgumentException, IOException, SocketTimeoutException;
+	boolean connect() throws CryptoSocketException, IOException, SocketTimeoutException;
 
 	/**
 	* Return the OutOfBand information.
@@ -102,7 +102,7 @@ public interface CryptoSocketInterface {
 	* communicationpartners. If it differs, NEVER call verifiedOOB()!
 	* Usable with ChannelType.WLAN
 	*/
-	byte[] getOOB() throws IllegalStateException;
+	byte[] getOOB() throws IllegalStateException, CryptoSocketException;
 	
 	/**
 	* Confirmation, that the other side is the one we expected.
@@ -113,20 +113,20 @@ public interface CryptoSocketInterface {
 	* read and manipulate your communication.
 	* Usable with ChannelType.WLAN
 	*/
-	void verifiedOOB() throws IllegalStateException;
+	void verifiedOOB() throws IllegalStateException, CryptoSocketException;
 
 	/**
 	 * Sets the SharedSecret.
 	 * This has to be used if the channel MANUAL is used and you will not create a sharedSecret.
 	 * */
-	//void setSharedSecret(byte[] sharedSecret) throws IllegalArgumentException; // <--- private now, because used in connect internaly
+	//void setSharedSecret(byte[] sharedSecret) throws CryptoSocketException; // <--- private now, because used in connect internaly
 
 	/**
 	 * Creates and sets a sharedSecret. 
 	 * It will be returned, so the user can transfer it to the communicationpartner and set it there.
 	 * I.e. channel MANUAL has to be used.
 	 * */
-	String createSharedSecret() throws IllegalArgumentException, IOException;
+	String createSharedSecret() throws CryptoSocketException, IOException;
 
 	/**
 	* Sends the given bytearray to the communicatonpartner.
@@ -135,7 +135,7 @@ public interface CryptoSocketInterface {
 	* Return negativ value on error, for error codes please look at enum RETURN.
 	* 	Returns RETURN.INVALID_CIPHERTEXT or RETURN.SUCCESS
 	*/
-	int write(byte[] array) throws UnverifiedException, IllegalStateException, IOException;
+	int write(byte[] array) throws UnverifiedException, IllegalStateException, IOException, CryptoSocketException;
 		
 	/*
 	* Reads bytes send from the communicationpartner and stores them in data.
@@ -146,7 +146,7 @@ public interface CryptoSocketInterface {
 	* Negativ value on error, for error codes please look at enum RETURN.
 	* 	Returns RETURN.READ, RETURN.WRONG_TAG, RETURN.NOT_AVAILABLE, RETURN.INVALID_CIPHERTEXT
 	*/
-	int read(boolean blocking, byte[] data) throws IllegalStateException, IllegalArgumentException, IOException;
+	int read(boolean blocking, byte[] data) throws IllegalStateException, CryptoSocketException, IOException;
 	
 	/**
 	* Returns true, if there is something to read, false, if not.

@@ -29,19 +29,27 @@ public class SecureDataSocket {
 	 *
 	 * compare the returned String with the one on the other device. call comparedPhrases(stringsWereEqual) afterwards.
 	 * */
-	public String setupClientNoCamera(String connectionDetails) throws IOException {
+	public String setupClientNoCamera(String connectionDetails) throws SecureDataSocketException {
 		//commitment
-		this.socket = new FDESocket(new Channel(ChannelType.WLAN, connectionDetails));
-		this.socket.connect();
-		return byteArrayToPhrase(this.socket.getOOB());
+		try{ 
+			this.socket = new FDESocket(new Channel(ChannelType.WLAN, connectionDetails));
+			this.socket.connect();
+			return byteArrayToPhrase(this.socket.getOOB());
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
 	}
 
 	/**
 	 * compare
 	 * */
-	public void comparedPhrases(boolean phrasesMatched) {
+	public void comparedPhrases(boolean phrasesMatched) throws SecureDataSocketException {
 		if (phrasesMatched) {
-			this.socket.verifiedOOB();
+			try{
+				this.socket.verifiedOOB();
+			} catch(Exception e) {
+				throw new SecureDataSocketException(e.toString(), e);
+			}
 		}
 		else {
 			this.close();
@@ -54,9 +62,13 @@ public class SecureDataSocket {
 	 *
 	 * Connection established afterwards.
 	 * */
-	public void setupClientWithCamera(String connectionDetails) throws IOException {
-		this.socket = new FDESocket(new Channel(ChannelType.MANUAL, connectionDetails));
-		this.socket.connect();
+	public void setupClientWithCamera(String connectionDetails) throws SecureDataSocketException {
+		try {
+			this.socket = new FDESocket(new Channel(ChannelType.MANUAL, connectionDetails));
+			this.socket.connect();
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
 	}
 
 
@@ -66,9 +78,13 @@ public class SecureDataSocket {
 	 *
 	 * compare the returned String with the one on the other device. call comparedPhrases(stringsWereEqual) afterwards.
 	 * */
-	public String setupServerNoClientCamera() throws IOException {
-		this.socket.listen(this.port);
-		return byteArrayToPhrase(this.socket.getOOB());
+	public String setupServerNoClientCamera() throws SecureDataSocketException {
+		try{
+			this.socket.listen(this.port);
+			return byteArrayToPhrase(this.socket.getOOB());
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
 	}
 
 
@@ -77,17 +93,25 @@ public class SecureDataSocket {
 	 *
 	 * returns the connectiondetails and the sharedSecret, that has to be transferred securely to the client by the user.
 	 * */
-	public String prepareServerWithClientCamera() throws IOException {
-		this.socket = new FDESocket(new Channel(ChannelType.MANUAL, "::"));
-		return getIPAddress(true) + ":" + this.port + ":" + this.socket.createSharedSecret();
+	public String prepareServerWithClientCamera() throws SecureDataSocketException {
+		try {
+			this.socket = new FDESocket(new Channel(ChannelType.MANUAL, "::"));
+			return getIPAddress(true) + ":" + this.port + ":" + this.socket.createSharedSecret();
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
 	}
 
 
 	/**
 	 * Method blocks until a client connected
 	 * */
-	public void setupServerWithClientCamera() throws IOException {
-		this.socket.listen(this.port);
+	public void setupServerWithClientCamera() throws SecureDataSocketException {
+		try{
+			this.socket.listen(this.port);
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
 	}
 
 	private String byteArrayToPhrase(byte[] bytes) throws IOException {
@@ -100,52 +124,134 @@ public class SecureDataSocket {
 	}
 
 	
-	public byte[] read() throws IllegalArgumentException, IllegalStateException, IOException {
-		return this.socket.read();
+	public byte[] read() throws SecureDataSocketException {
+		byte[] read;
+		try {	
+			read = this.socket.read();
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return read; 
 	}
 
-	public String readString() throws IllegalArgumentException, IllegalStateException, IOException {
-		return this.socket.readString();
+	public String readString() throws SecureDataSocketException {
+		String read;
+		try {	
+			read = this.socket.readString();
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return read; 
 	}
 	
-	public int readInt() throws IllegalArgumentException, IllegalStateException, IOException {
-		return this.socket.readInt();
+	public int readInt() throws SecureDataSocketException {
+		int read;
+		try {	
+			read = this.socket.readInt();
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return read; 
 	}
 	
-	public float readFloat() throws IllegalArgumentException, IllegalStateException, IOException {
-		return this.socket.readFloat();
+	public float readFloat() throws SecureDataSocketException {
+		float read;
+		try {	
+			read = this.socket.readFloat();
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return read; 
 	}
 
-	public double readDouble() throws IllegalArgumentException, IllegalStateException, IOException {
-		return this.socket.readDouble();
+	public double readDouble() throws SecureDataSocketException {
+		double read;
+		try {	
+			read = this.socket.readDouble();
+		} catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return read; 
 	}
 
-	public Serializable readObject() throws IllegalArgumentException, IllegalStateException, IOException, ClassNotFoundException {
-		return this.socket.readObject();
+	public Serializable readObject() throws SecureDataSocketException, ClassNotFoundException {
+		Serializable read;
+		try {	
+			read = this.socket.readObject();
+		} 
+		catch(ClassNotFoundException e){
+			throw e;
+		}
+		catch(Exception e) {
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return read; 
 	}
 
-	public int write(byte[] array) throws UnverifiedException, IllegalStateException, IOException {
-		return this.socket.write(array);
+	public int write(byte[] array) throws SecureDataSocketException {
+		int ret = 0;
+		try {
+			ret = this.socket.write(array);
+		}
+		catch(Exception e){
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return ret;
 	}
 
-	public int write(int i) throws UnverifiedException, IllegalStateException, IOException {
-		return this.socket.write(i);
+	public int write(int i) throws SecureDataSocketException {
+		int ret = 0;
+		try {
+			ret = this.socket.write(i);
+		}
+		catch(Exception e){
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return ret;
 	}
 
-	public int write(Float f) throws UnverifiedException, IllegalStateException, IOException {
-		return this.socket.write(f);
+	public int write(Float f) throws SecureDataSocketException {
+		int ret = 0;
+		try {
+			ret = this.socket.write(f);
+		}
+		catch(Exception e){
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return ret;
 	}
 
-	public int write(Double d) throws UnverifiedException, IllegalStateException, IOException {
-		return this.socket.write(d);
+	public int write(Double d) throws SecureDataSocketException {
+		int ret = 0;
+		try {
+			ret = this.socket.write(d);
+		}
+		catch(Exception e){
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return ret;
 	}
 
-	public int write(String s) throws UnverifiedException, IllegalStateException, IOException {
-		return this.socket.write(s);
+	public int write(String s) throws SecureDataSocketException {
+		int ret = 0;
+		try {
+			ret = this.socket.write(s);
+		}
+		catch(Exception e){
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return ret;
 	}
 
-	public int write(Serializable s)  throws UnverifiedException, IllegalStateException, IOException {
-		return this.socket.write(s);
+	public int write(Serializable s)  throws SecureDataSocketException {
+		int ret = 0;
+		try {
+			ret = this.socket.write(s);
+		}
+		catch(Exception e){
+			throw new SecureDataSocketException(e.toString(), e);
+		}
+		return ret;
 	}
 
 	public void close() {

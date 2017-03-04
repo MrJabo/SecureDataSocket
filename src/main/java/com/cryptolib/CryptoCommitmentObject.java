@@ -31,7 +31,7 @@ public class CryptoCommitmentObject{
 	private byte[] mySalt = null;
 	private Mac hmac = null;
 
-	public CryptoCommitmentObject(byte[] message) throws IllegalArgumentException, InvalidKeyException, NoSuchAlgorithmException {
+	public CryptoCommitmentObject(byte[] message) throws CryptoSocketException, InvalidKeyException, NoSuchAlgorithmException {
 		messageLength = message.length;
 		aLength = messageLength;
 		xLength = messageLength;
@@ -131,16 +131,16 @@ public class CryptoCommitmentObject{
 		this.myDecommitment = decommitment;
 	}
 
-	public void addOtherCommitment(byte[] commitment) throws IllegalArgumentException {
+	public void addOtherCommitment(byte[] commitment) throws CryptoSocketException {
 		if (commitment.length != commitmentSize())
-			throw new IllegalArgumentException();
+			throw new CryptoSocketException("different Commitmentsizes");
 
 		this.otherCommitment = commitment;
 	}
 
-	public void open(byte[] decommitment) throws IllegalArgumentException, InvalidKeyException, NoSuchAlgorithmException {
+	public void open(byte[] decommitment) throws CryptoSocketException, InvalidKeyException, NoSuchAlgorithmException {
 		if (this.myCommitment == null || this.myDecommitment == null || this.otherCommitment == null || decommitment.length != decommitmentSize()){
-			throw new IllegalArgumentException();
+			throw new CryptoSocketException("not ready to open");
 		}
 
 		//parse decommitment
@@ -187,19 +187,19 @@ public class CryptoCommitmentObject{
 		//validate decommitment mac // <-- not needed anymore since decommitment contains only x
 		/*if (!Arrays.equals(mac.doFinal(Arrays.copyOfRange(this.otherDecommitment, macSize, this.otherDecommitment.length)), otherTag)){
 			this.otherDecommitment = null;
-			throw new IllegalArgumentException();
+			throw new CryptoSocketException();
 		}*/
 	
 		//validate commitment mac
 		if (!Arrays.equals(mac.doFinal(hb), otherMacb)){
 			this.otherDecommitment = null;
-			throw new IllegalArgumentException();
+			throw new CryptoSocketException("invalid MAC. You may be attacked");
 		}
 
 		//validate BCrypt
 		if (!Arrays.equals(BCrypt.generate(otherXb, otherSaltb, cost), otherHb)){
 			this.otherDecommitment = null;
-			throw new IllegalArgumentException();
+			throw new CryptoSocketException("invalid BCrypt. You may be attacked");
 		}
 
 		//set Values

@@ -21,55 +21,55 @@ public class FDESocket {
 	public /*static*/ final int PACKET_SIZE;
 	private CryptoSocket cryptoSocket;
 	
-	/*public FDESocket(CryptoSocketInterface.Channel c, String id, int payloadSize) throws IllegalArgumentException{
+	/*public FDESocket(CryptoSocketInterface.Channel c, String id, int payloadSize) throws CryptoSocketException{
 		this.PAYLOAD_SIZE = payloadSize;
 		this.PACKET_SIZE = PAYLOAD_SIZE+2;
 		if (PAYLOAD_SIZE > 32767)
-			throw new IllegalArgumentException("to large PAYLOAD_SIZE");
+			throw new CryptoSocketException("to large PAYLOAD_SIZE");
 		cryptoSocket = new CryptoSocket(c, id);
 	}*/
 	
-	public FDESocket(CryptoSocketInterface.Channel c, int payloadSize) throws IllegalArgumentException{
+	public FDESocket(CryptoSocketInterface.Channel c, int payloadSize) throws CryptoSocketException{
 		this.PAYLOAD_SIZE = payloadSize;
 		this.PACKET_SIZE = PAYLOAD_SIZE+2;
 		if (PAYLOAD_SIZE > 32767)
-			throw new IllegalArgumentException("to large PAYLOAD_SIZE");
+			throw new CryptoSocketException("to large PAYLOAD_SIZE");
 		cryptoSocket = new CryptoSocket(c);
 	}
 	
-	/*public FDESocket(CryptoSocketInterface.Channel c, String id) throws IllegalArgumentException{
+	/*public FDESocket(CryptoSocketInterface.Channel c, String id) throws CryptoSocketException{
 		this(c, id, 1024);
 	}*/
 
-	public FDESocket(CryptoSocketInterface.Channel c) throws IllegalArgumentException{
+	public FDESocket(CryptoSocketInterface.Channel c) throws CryptoSocketException{
 		this(c, 1024);
 	}
 
-	public SocketAddress listen(int port) throws IOException, SocketTimeoutException{
+	public SocketAddress listen(int port) throws CryptoSocketException, IOException, SocketTimeoutException{
 		return cryptoSocket.listen(port);
 	}
 
-	public boolean connect() throws IllegalArgumentException, IOException, SocketTimeoutException {
+	public boolean connect() throws CryptoSocketException, IOException, SocketTimeoutException {
 		return cryptoSocket.connect();
 	}
 
-	public byte[] getOOB() throws IllegalStateException {
+	public byte[] getOOB() throws IllegalStateException, CryptoSocketException {
 		return cryptoSocket.getOOB();
 	}
 
-	public String createSharedSecret() throws IllegalArgumentException, IOException {
+	public String createSharedSecret() throws CryptoSocketException, IOException {
 		return cryptoSocket.createSharedSecret();
 	}
 
-	//public void setSharedSecret(byte [] sharedSecret) throws IllegalArgumentException {
+	//public void setSharedSecret(byte [] sharedSecret) throws CryptoSocketException {
 	//	cryptoSocket.setSharedSecret(sharedSecret);
 	//}
 
-	public void verifiedOOB() throws IllegalStateException{
+	public void verifiedOOB() throws IllegalStateException, CryptoSocketException {
 		cryptoSocket.verifiedOOB();
 	}
 
-	public byte[] read() throws IllegalArgumentException, IllegalStateException, IOException {
+	public byte[] read() throws CryptoSocketException, IllegalStateException, IOException {
 		boolean done = false;
 		byte[] data = new byte[0];
 		//stop reading after specific size?
@@ -84,32 +84,32 @@ public class FDESocket {
 		return data;
 	}
 
-	public String readString() throws IllegalArgumentException, IllegalStateException, IOException {
+	public String readString() throws CryptoSocketException, IllegalStateException, IOException {
 		return new String(read());
 	}
 
-	public int readInt() throws IllegalArgumentException, IllegalStateException, IOException {
+	public int readInt() throws CryptoSocketException, IllegalStateException, IOException {
 		ByteBuffer wrapped = ByteBuffer.wrap(read());
 		return wrapped.getInt();
 	}
 	
-	public float readFloat() throws IllegalArgumentException, IllegalStateException, IOException {
+	public float readFloat() throws CryptoSocketException, IllegalStateException, IOException {
 		ByteBuffer wrapped = ByteBuffer.wrap(read());
 		return wrapped.getFloat();
 	}
 
-	public double readDouble() throws IllegalArgumentException, IllegalStateException, IOException {
+	public double readDouble() throws CryptoSocketException, IllegalStateException, IOException {
 		ByteBuffer wrapped = ByteBuffer.wrap(read());
 		return wrapped.getDouble();
 	}
 
-	public Serializable readObject() throws IllegalArgumentException, IllegalStateException, IOException, ClassNotFoundException {
+	public Serializable readObject() throws CryptoSocketException, IllegalStateException, IOException, ClassNotFoundException {
 		ByteArrayInputStream bis = new ByteArrayInputStream(read());
 		ObjectInputStream in = new ObjectInputStream(bis);
 		return (Serializable) in.readObject();
 	}
 
-	public int write(byte[] array) throws UnverifiedException, IllegalStateException, IOException {
+	public int write(byte[] array) throws UnverifiedException, IllegalStateException, CryptoSocketException, IOException{
 		byte[][] packets = splitUp(array);
 		for (byte[] packet : packets){
 			if (cryptoSocket.write(packet) != RETURN.SUCCESS.getValue()){
@@ -121,33 +121,33 @@ public class FDESocket {
 		return RETURN.SUCCESS.getValue();
 	}
 
-	public int write(int i) throws UnverifiedException, IllegalStateException, IOException {
+	public int write(int i) throws UnverifiedException, IllegalStateException, CryptoSocketException, IOException{
 		ByteBuffer dbuf = ByteBuffer.allocate(4);
 		dbuf.putInt(i);
 		byte[] bytes = dbuf.array();
 		return write(bytes);
 	}
 
-	public int write(Float f) throws UnverifiedException, IllegalStateException, IOException {
+	public int write(Float f) throws UnverifiedException, IllegalStateException, CryptoSocketException, IOException{
 		ByteBuffer dbuf = ByteBuffer.allocate(4);
 		dbuf.putFloat(f);
 		byte[] bytes = dbuf.array();
 		return write(bytes);
 	}
 
-	public int write(Double d) throws UnverifiedException, IllegalStateException, IOException {
+	public int write(Double d) throws UnverifiedException, IllegalStateException, CryptoSocketException, IOException{
 		ByteBuffer dbuf = ByteBuffer.allocate(8);
 		dbuf.putDouble(d);
 		byte[] bytes = dbuf.array();
 		return write(bytes);
 	}
 
-	public int write(String s) throws UnverifiedException, IllegalStateException, IOException {
+	public int write(String s) throws UnverifiedException, IllegalStateException, CryptoSocketException, IOException{
 		byte[] bytes = s.getBytes();
 		return write(bytes);
 	}
 
-	public int write(Serializable s)  throws UnverifiedException, IllegalStateException, IOException {
+	public int write(Serializable s)  throws UnverifiedException, IllegalStateException, CryptoSocketException, IOException{
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutputStream out = new ObjectOutputStream(bos);
 		out.writeObject(s);
@@ -187,16 +187,16 @@ public class FDESocket {
 		return out;
 	}
 
-	private boolean isLast(byte[] packet) throws IllegalArgumentException {
+	private boolean isLast(byte[] packet) throws CryptoSocketException {
 		if (packet.length != PACKET_SIZE){
-			throw new IllegalArgumentException("invalid packetsize!");
+			throw new CryptoSocketException("invalid packetsize!");
 		}
 		return packet[1] < 0;
 	}
 
-	private byte[] getContent(byte[] packet) throws IllegalArgumentException {
+	private byte[] getContent(byte[] packet) throws CryptoSocketException {
 		/*if (packet.length != PACKET_SIZE){
-			throw new IllegalArgumentException("invalid packetsize!");
+			throw new CryptoSocketException("invalid packetsize!");
 		}*/ //done in getContentSize
 		int size = getContentSize(packet);
 		byte[] out = new byte[size];
@@ -204,13 +204,13 @@ public class FDESocket {
 		return out;
 	}
 
-	private int getContentSize(byte[] packet) throws IllegalArgumentException {
+	private int getContentSize(byte[] packet) throws CryptoSocketException {
 		if (packet.length != PACKET_SIZE){
-			throw new IllegalArgumentException("invalid packetsize!");
+			throw new CryptoSocketException("invalid packetsize!");
 		}
 		int size = (packet[0] & 0xFF)+(packet[1] & 0x7F)*256;
 		if (size > PAYLOAD_SIZE){
-			throw new IllegalArgumentException("invalid lengthfield!");
+			throw new CryptoSocketException("invalid lengthfield!");
 		}
 		return size;
 	}
