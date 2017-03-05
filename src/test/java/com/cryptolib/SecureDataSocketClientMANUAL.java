@@ -11,7 +11,7 @@ public class SecureDataSocketClientMANUAL{
 	public static void main(String [] args){
 		try{
 			SecureDataSocket cs = new SecureDataSocket(4711);
-			cs.setupClientWithCamera("192.168.178.34:4711:0Yknu8HioYL4CZ3XPkxguiXlIdbIf+jblHmNMLK6cpM=");
+			cs.setupClientWithCamera("192.168.178.34:4711:0Yknu8HioYL4CZ3XPkxguiXlIdbIf+jblHmNMLK6cpM="); //insert the output of the server here
 
 			byte[] testb = cs.read();
 			System.out.println("Read!");
