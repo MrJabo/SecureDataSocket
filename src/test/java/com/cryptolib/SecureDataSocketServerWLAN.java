@@ -8,12 +8,13 @@ import com.cryptolib.SecureDataSocket;
 import java.security.Security;
 import java.util.Arrays;
 
-public class SecureDataSocketServerQR{
+public class SecureDataSocketServerWLAN{
 	public static void main(String [] args){
 		try{
 			SecureDataSocket cs = new SecureDataSocket(4711);
-			System.out.println(cs.prepareServerWithClientCamera());
-			cs.setupServerWithClientCamera();
+			System.out.println(cs.setupServerNoClientCamera());
+			//Never do this without checking, if the phrases on both devices are the same. If they are different call cs.comparesPhrases(false)
+			cs.comparedPhrases(true);
 			System.out.println("Write: "+cs.write("Hallo Client!".getBytes()));
 			byte[] test = cs.read();
 			System.out.println("Read!");

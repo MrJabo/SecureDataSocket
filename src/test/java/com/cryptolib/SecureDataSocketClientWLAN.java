@@ -7,15 +7,13 @@ import com.cryptolib.CryptoSocket;
 import com.cryptolib.SecureDataSocket;
 import java.util.Arrays;
 
-public class SecureDataSocketClientQR{
+public class SecureDataSocketClientWLAN{
 	public static void main(String [] args){
 		try{
 			SecureDataSocket cs = new SecureDataSocket(4711);
-			cs.setupClientWithCamera("192.168.178.34:4711:4Viw9UKdulNLSaxMujQ2/h9vogsfWp+d9D56XVJkYSk=");
-			/*if (!test){
-				System.out.println("Failed!");
-				return;
-			}*/
+			System.out.println(cs.setupClientNoCamera("192.168.178.34:4711"));
+	                //Never do this without checking, if the phrases on both devices are the same. If they are different call cs.comparesPhrases(false)
+                        cs.comparedPhrases(true);
 
 			byte[] testb = cs.read();
 			System.out.println("Read!");

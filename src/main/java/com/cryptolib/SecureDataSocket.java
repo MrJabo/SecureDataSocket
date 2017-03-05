@@ -79,7 +79,8 @@ public class SecureDataSocket {
 	 * compare the returned String with the one on the other device. call comparedPhrases(stringsWereEqual) afterwards.
 	 * */
 	public String setupServerNoClientCamera() throws SecureDataSocketException {
-		try{
+		try{	
+			this.socket = new FDESocket(new Channel(ChannelType.WLAN, ":"));
 			this.socket.listen(this.port);
 			return byteArrayToPhrase(this.socket.getOOB());
 		} catch(Exception e) {
