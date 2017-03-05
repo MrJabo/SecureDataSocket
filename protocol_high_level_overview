@@ -8,8 +8,8 @@ Let c be the commitment and d be the decommitment:
 A <- (0,1)^n
 x <- (0,1)^n
 m <- (0,1)^n
-B:= m - Ax
 h:=Az + B (mod n)
+B:= m - Ax
 c:=<H(x),A,B,g(x,(H(x)||A||B))>
 
 Decommiment:
