@@ -61,7 +61,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 				this.createCryptoObject();
 				this.running = true;
 				while(this.running){
-					while (true){
+					while (this.running){
 						this.socket = this.server.accept();
 
 						if (!(this.channel.id.equals("") || this.channel.id.equals(":") || this.channel.id.equals("::")) && !this.channel.id.equals(socket.getRemoteSocketAddress().toString())){
