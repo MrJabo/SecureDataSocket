@@ -41,12 +41,10 @@ import java.util.Arrays;
 public class CryptoObject {
 	private Provider provider = null;
 	private KeyPair encKeypair = null;
-	private SecretKeySpec sharedSecretInner = null;
-	private SecretKeySpec sharedSecretOuter = null;
-	private Cipher encOuter = null;
-	private Cipher encInner = null;
-	private Cipher decOuter = null;
-	private Cipher decInner = null;
+	private SecretKeySpec sharedSecretSecond = null;
+	private SecretKeySpec sharedSecretFirst = null;
+	private Cipher enc = null;
+	private Cipher dec = null;
 	private String enc_algorithm = "";
 	private String curve = "";
 	private byte[] OOB = null;
@@ -133,7 +131,7 @@ public class CryptoObject {
 	* Get encryption offset (iv_size + tag_size)
 	*/
 	public int getOffset(){
-		return 2*(this.iv_size + this.tag_size);
+		return this.iv_size + this.tag_size;
 	}
 
 	/**
@@ -223,17 +221,15 @@ public class CryptoObject {
 			ECDHCBasicAgreement ba = new ECDHCBasicAgreement();
 			ba.init(ecskp);
 			byte[] byteSharedSecret = ba.calculateAgreement(ecpkp).toByteArray();
-			byte[] byteSharedSecretInner = new byte[byteSharedSecret.length/2];
-			byte[] byteSharedSecretOuter = new byte[byteSharedSecret.length/2];
-			System.arraycopy(byteSharedSecret, 0, byteSharedSecretInner, 0, byteSharedSecretInner.length);
-			System.arraycopy(byteSharedSecret, byteSharedSecretInner.length, byteSharedSecretOuter, 0, byteSharedSecretOuter.length);
-			this.sharedSecretOuter = new SecretKeySpec(byteSharedSecretOuter, "AES");
-			this.sharedSecretInner = new SecretKeySpec(byteSharedSecretInner, "AES");
+			byte[] byteSharedSecretSecond = new byte[byteSharedSecret.length/2];
+			byte[] byteSharedSecretFirst = new byte[byteSharedSecret.length/2];
+			System.arraycopy(byteSharedSecret, 0, byteSharedSecretSecond, 0, byteSharedSecretSecond.length);
+			System.arraycopy(byteSharedSecret, byteSharedSecretSecond.length, byteSharedSecretFirst, 0, byteSharedSecretFirst.length);
+			this.sharedSecretFirst = new SecretKeySpec(byteSharedSecretFirst, "AES");
+			this.sharedSecretSecond = new SecretKeySpec(byteSharedSecretSecond, "AES");
 			this.has_symmetric_key = true;
-			this.encInner = Cipher.getInstance("AES/GCM/NoPadding");
-			this.encOuter = Cipher.getInstance("AES/GCM/NoPadding");
-			this.decInner = Cipher.getInstance("AES/GCM/NoPadding");
-			this.decOuter = Cipher.getInstance("AES/GCM/NoPadding");
+			this.enc = Cipher.getInstance("AES/GCM/NoPadding");
+			this.dec = Cipher.getInstance("AES/GCM/NoPadding");
 		} catch(IllegalStateException is){
 			throw new CryptoSocketException("unable to create shared encryption key, wrong state!");
 		} catch(NoSuchAlgorithmException nsa){
@@ -252,17 +248,15 @@ public class CryptoObject {
 			throw new CryptoSocketException("invalid sharedSecret-size; has to have a length of 32 bytes");
 		}
 		try {
-			byte[] byteSharedSecretInner = new byte[sharedSecret.length/2];
-			byte[] byteSharedSecretOuter = new byte[sharedSecret.length/2];
-			System.arraycopy(sharedSecret, 0, byteSharedSecretInner, 0, byteSharedSecretInner.length);
-			System.arraycopy(sharedSecret, byteSharedSecretInner.length, byteSharedSecretOuter, 0, byteSharedSecretOuter.length);
-			this.sharedSecretOuter = new SecretKeySpec(byteSharedSecretOuter, "AES");
-			this.sharedSecretInner = new SecretKeySpec(byteSharedSecretInner, "AES");
+			byte[] byteSharedSecretSecond = new byte[sharedSecret.length/2];
+			byte[] byteSharedSecretFirst = new byte[sharedSecret.length/2];
+			System.arraycopy(sharedSecret, 0, byteSharedSecretSecond, 0, byteSharedSecretSecond.length);
+			System.arraycopy(sharedSecret, byteSharedSecretSecond.length, byteSharedSecretFirst, 0, byteSharedSecretFirst.length);
+			this.sharedSecretFirst = new SecretKeySpec(byteSharedSecretFirst, "AES");
+			this.sharedSecretSecond = new SecretKeySpec(byteSharedSecretSecond, "AES");
 			this.has_symmetric_key = true;
-			this.encInner = Cipher.getInstance("AES/GCM/NoPadding");
-			this.encOuter = Cipher.getInstance("AES/GCM/NoPadding");
-			this.decInner = Cipher.getInstance("AES/GCM/NoPadding");
-			this.decOuter = Cipher.getInstance("AES/GCM/NoPadding");
+			this.enc = Cipher.getInstance("AES/GCM/NoPadding");
+			this.dec = Cipher.getInstance("AES/GCM/NoPadding");
 		} catch(IllegalStateException is){
 			throw new CryptoSocketException("unable to create shared encryption key, wrong state!");
 		} catch(NoSuchAlgorithmException nsa){
@@ -288,26 +282,16 @@ public class CryptoObject {
 			throw new CryptoSocketException("No data found for encryption");
 		}
 
-		byte[] ivInner = new byte[this.iv_size];
-		byte[] ivOuter = new byte[this.iv_size];
-		byte[] inputOuter = null;
-		byte[] encryptedInner = null;
-		byte[] encryptedOuter = null;
+		byte[] iv = new byte[this.iv_size];
 		byte[] output = null;
 		byte[] encryptData = null;
-		this.random.nextBytes(ivInner);
-		this.random.nextBytes(ivOuter);
+		this.random.nextBytes(iv);
 		try {
-			this.encInner.init(Cipher.ENCRYPT_MODE, this.sharedSecretInner, new GCMParameterSpec(this.tag_size * 8, ivInner));
-			this.encOuter.init(Cipher.ENCRYPT_MODE, this.sharedSecretOuter, new GCMParameterSpec(this.tag_size * 8, ivOuter));
-			encryptedInner = this.encInner.doFinal(data);
-			inputOuter = new byte[this.iv_size + encryptedInner.length];
-			System.arraycopy(ivInner, 0, inputOuter, 0, this.iv_size);
-			System.arraycopy(encryptedInner, 0, inputOuter, this.iv_size, encryptedInner.length);
-			encryptedOuter = this.encOuter.doFinal(inputOuter);
-			output = new byte[this.iv_size + encryptedOuter.length];
-			System.arraycopy(ivOuter, 0, output, 0, this.iv_size);
-			System.arraycopy(encryptedOuter, 0, output, this.iv_size, encryptedOuter.length);
+			this.enc.init(Cipher.ENCRYPT_MODE, this.sharedSecretFirst, new GCMParameterSpec(this.tag_size * 8, iv));
+			encryptData = this.enc.doFinal(data);
+			output = new byte[this.iv_size + encryptData.length];
+			System.arraycopy(iv, 0, output, 0, this.iv_size);
+			System.arraycopy(encryptData, 0, output, this.iv_size, encryptData.length);
 		} catch(AEADBadTagException abt){
 			throw new CryptoSocketException("Decryption exception? Impossible!");
 		} catch(BadPaddingException bp){
@@ -339,22 +323,14 @@ public class CryptoObject {
 			throw new CryptoSocketException("The data are too small for a ciphertext!");
 		}
 
-		byte[] ivOuter = new byte[this.iv_size];
-		byte[] ivInner = new byte[this.iv_size];
+		byte[] iv = new byte[this.iv_size];
 		byte[] ciphertext = new byte[data.length - this.iv_size];
-		System.arraycopy(data, 0, ivOuter, 0, this.iv_size);
+		System.arraycopy(data, 0, iv, 0, this.iv_size);
 		System.arraycopy(data, this.iv_size, ciphertext, 0, ciphertext.length);
-		byte[] decryptInner = null;
 		byte[] decryptData = null;
-		byte[] decryptedOuter = null;
 		try {
-			this.decOuter.init(Cipher.DECRYPT_MODE, this.sharedSecretOuter, new GCMParameterSpec(this.tag_size * 8, ivOuter));
-			decryptedOuter = this.decOuter.doFinal(ciphertext);
-			decryptInner = new byte[decryptedOuter.length - this.iv_size];
-			System.arraycopy(decryptedOuter, 0, ivInner, 0, this.iv_size);
-			System.arraycopy(decryptedOuter, this.iv_size, decryptInner, 0, decryptedOuter.length - this.iv_size);
-			this.decInner.init(Cipher.DECRYPT_MODE, this.sharedSecretInner, new GCMParameterSpec(this.tag_size * 8, ivInner));
-			decryptData = this.decInner.doFinal(decryptInner);
+			this.dec.init(Cipher.DECRYPT_MODE, this.sharedSecretFirst, new GCMParameterSpec(this.tag_size * 8, iv));
+			decryptData = this.dec.doFinal(ciphertext);
 		} catch (AEADBadTagException abt){
 			return null;
 		} catch (BadPaddingException bp){
