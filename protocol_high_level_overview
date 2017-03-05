@@ -1,4 +1,5 @@
-Let H be a collision resistent hash function (e.g. SHA-512 is collision resistent for 256 bits (32 byte)) and h a two universal hash function (e.g. h := Ax + B). Let g be a HMac function with security parameter (0,1)^k. Notation: g(x,m) is the tag t for message m with security parameter x.
+Let H be a collision resistent hash function (e.g. SHA-512 is collision resistent for 256 bits (32 byte)) and h a two universal hash function (e.g. h := Ax + B).
+Let g be a HMac function with security parameter (0,1)^k. Notation: g(x,m) is the tag t for message m with security parameter x.
 
 Commitment scheme:
 Let c be the commitment and d be the decommitment:
