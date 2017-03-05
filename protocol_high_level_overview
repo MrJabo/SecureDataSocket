@@ -36,3 +36,18 @@ Alice ----------- c_A -------------> Bob
 Alice <---------- c_B -------------- Bob
 Alice ----------- d_A -------------> Bob
 Alice <---------- d_B -------------- Bob
+
+
+When Channel MANUAL is used, the sharedSecret is transported via a Out-Of-Bounds-channel (e.g. visual). i.e. the sharedSecret is known by the client and the server, when the network-connection is setup.
+To verify, if both devices are able to read, what the other sends (verify they use the same sharedSecret), a check is performed
+
+Server: create randomNumberA
+Server ------ randomNumberA -------> Client
+Server <----- randomNumberA+1 ------ Client
+
+Client: create randomNumberB
+Server <----- randomNumberB -------- Client
+Server ------ randomNumberB+1 -----> Client
+
+After this exchange the numbers are compared with the expected results. If a unexpected result was received the connection is closed.
+Since the AES-128, used in for the encryption, uses a MAC only one check (randomNumberA or randomNumberB) should be enough. We used both.
