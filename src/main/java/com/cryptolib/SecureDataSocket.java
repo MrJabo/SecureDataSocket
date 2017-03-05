@@ -116,12 +116,24 @@ public class SecureDataSocket {
 	}
 
 	private String byteArrayToPhrase(byte[] bytes) throws IOException {
-		//TODO create phrases instead of hexstring
-		StringBuilder builder = new StringBuilder();
-		for(byte b : bytes) {
-			builder.append(String.format("%02x", b));
+		String out = "";
+
+		for(int index = 0; index < 3; index++) {
+			int dictIndex = 2*index;
+			int lower = bytes[index] & 0x0f;
+			int upper = (bytes[index] & 0xf0) >> 4;
+
+			out = out + Dict.dictionary[dictIndex][upper] + " ";
+			dictIndex = dictIndex + 1;
+
+			if (dictIndex != 5) {
+				out = out + Dict.dictionary[dictIndex][lower] + " ";
+			} else {
+				out = out + Dict.dictionary[dictIndex][lower] + ".";
+			}
 		}
-		return builder.toString();
+
+		return out;
 	}
 
 	
