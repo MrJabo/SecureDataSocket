@@ -6,12 +6,18 @@ import com.cryptolib.CryptoSocketInterface.ChannelType;
 import com.cryptolib.CryptoSocket;
 import com.cryptolib.SecureDataSocket;
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class SecureDataSocketClientMANUAL{
 	public static void main(String [] args){
 		try{
+			
+
+			Scanner reader = new Scanner(System.in);
+			System.out.println("insert connectionDetails printed by the server");
+			String details = reader.next();
 			SecureDataSocket cs = new SecureDataSocket(4711);
-			cs.setupClientWithCamera("192.168.178.34:4711:0Yknu8HioYL4CZ3XPkxguiXlIdbIf+jblHmNMLK6cpM="); //insert the output of the server here
+			cs.setupClientWithCamera(details); //insert the output of the server here
 
 			byte[] testb = cs.read();
 			System.out.println("Read!");
