@@ -20,7 +20,7 @@ public class CryptoCommitmentObject{
 	final int xLength;
 	final int hLength = 24; //BCrypt
 	final int saltLength = 16;
-	final int cost = 14;
+	final int cost = 10;
 
 	private byte[] myCommitment = null, myDecommitment = null;
 	private byte[] otherCommitment = null, otherDecommitment = null;
