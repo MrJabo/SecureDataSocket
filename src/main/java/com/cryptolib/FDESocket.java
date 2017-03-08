@@ -33,7 +33,9 @@ public class FDESocket {
 		this.PAYLOAD_SIZE = payloadSize;
 		this.PACKET_SIZE = PAYLOAD_SIZE+2;
 		if (PAYLOAD_SIZE > 32767)
-			throw new CryptoSocketException("to large PAYLOAD_SIZE");
+			throw new CryptoSocketException("too large PAYLOAD_SIZE");
+		if (PAYLOAD_SIZE < 1)
+			throw new CryptoSocketException("too small PAYLOAD_SIZE");
 		cryptoSocket = new CryptoSocket(c);
 	}
 	
