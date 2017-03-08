@@ -434,7 +434,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 			}
 
 			try {
-				System.out.println("Opening..");
+				//System.out.println("Opening..");
 				this.cobject.openCommitmentAndCreateSharedSecret(otherDecommitment);
 			} catch(CryptoSocketException ia){
 				this.createCryptoObject();
