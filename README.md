@@ -15,3 +15,14 @@
 	   along with SecureDataSocket.  If not, see <http://www.gnu.org/licenses/>-->
 
 # SecureDataSocket
+
+If you want to use the library for stand alone executable
+please download the latest bouncy castle jar and copy it to the git root directory, then build the library:
+make clean
+make
+make jar
+
+You can use bin/cryptolib.jar
+
+If you want to use the library for android apps, then you can use it as git submodule:
+git submodule add https://github.com/MrJabo/SecureDataSocket.git
