@@ -52,57 +52,21 @@ public class CryptoCommitmentObject{
 		aLength = messageLength;
 		xLength = messageLength;
 		this.myMessage = new BigInteger(1,message);
-		/*//DEBUG BEGIN
-		System.out.println("myMessage");
-		for (int i = 0; i < fillUp(myMessage.toByteArray()).length; i++){
-			System.out.print(fillUp(myMessage.toByteArray())[i]);
-			System.out.print(".");
-		}
-		System.out.println();
-		//DEBUG END*/
-
 		SecureRandom random = new SecureRandom();
 		this.myA = new byte[aLength];
 		random.nextBytes(this.myA);
-		/*//DEBUG BEGIN
-		System.out.println("myA");
-		for (int i = 0; i < aLength; i++){
-			this.myA[i] = (byte) 255;
-			System.out.print(myA[i]);
-			System.out.print(".");
-		}
-		System.out.println();
-		//DEBUG END*/
 		this.myX = new byte[xLength];
 		random.nextBytes(this.myX);
-		/*//DEBUG BEGIN
-		System.out.println("myX");
-		for (int i = 0; i < xLength; i++){
-			this.myX[i] = (byte) 255;
-			System.out.print(myX[i]);
-			System.out.print(".");
-		}
-		System.out.println();
-		//DEBUG END*/
 		BigInteger a = new BigInteger(1,this.myA);
-		BigInteger x = new BigInteger(1,this.myX);
-		/*byte[] tmpBytes = new byte[xLength];
-		tmpBytes[0] = (byte)128;
-		for (int i = 1; i < tmpBytes.length; i++){
-			tmpBytes[i] = 0;
-		}*/
-		this.myB = myMessage.subtract(a.multiply(x)).mod(new BigInteger("2").pow(xLength*8));//.add(new BigInteger(tmpBytes));
-		/*//DEBUG BEGIN
-		System.out.println("myB");
-		System.out.println(myB.toString());
-		byte[] tmpB = fillUp(myB.toByteArray());
-		for (int i = 0; i < tmpB.length; i++){
-			//tmpB[i] = (byte) 255;
-			System.out.print(tmpB[i]);
-			System.out.print(".");
+
+		//ensure A not null
+		while (0 == a.compareTo(new BigInteger("0"))) {
+			random.nextBytes(this.myA);
+			a = new BigInteger(1,this.myA);
 		}
-		System.out.println();
-		//DEBUG END*/
+
+		BigInteger x = new BigInteger(1,this.myX);
+		this.myB = myMessage.subtract(a.multiply(x)).mod(new BigInteger("2").pow(xLength*8));
 		this.mySalt = new byte[saltLength];
 		random.nextBytes(this.mySalt);
 		SecretKey key = new SecretKeySpec(myX, "HmacSHA512");
@@ -175,37 +139,9 @@ public class CryptoCommitmentObject{
 		System.arraycopy(otherAb, 0, hb, otherHb.length + otherSaltb.length, otherAb.length);
 		System.arraycopy(otherBb, 0, hb, otherHb.length + otherSaltb.length + otherAb.length, otherBb.length);
 
-		/*//DEBUG BEGIN
-		System.out.println("otherBb");
-		for (int i = 0; i < otherBb.length; i++){
-			System.out.print(otherBb[i]);
-			System.out.print(".");
-		}
-		System.out.println();
-		System.out.println("otherAb");
-		for (int i = 0; i < otherAb.length; i++){
-			System.out.print(otherAb[i]);
-			System.out.print(".");
-		}
-		System.out.println();
-		System.out.println("otherXb");
-		for (int i = 0; i < otherXb.length; i++){
-			System.out.print(otherXb[i]);
-			System.out.print(".");
-		}
-		System.out.println();
-		//DEBUG END*/
-
 		SecretKey key = new SecretKeySpec(otherXb, this.hmac.getAlgorithm());
 		Mac mac = Mac.getInstance(key.getAlgorithm());
 		mac.init(key);
-
-		//validate decommitment mac // <-- not needed anymore since decommitment contains only x
-		/*if (!Arrays.equals(mac.doFinal(Arrays.copyOfRange(this.otherDecommitment, macSize, this.otherDecommitment.length)), otherTag)){
-			this.otherDecommitment = null;
-			throw new CryptoSocketException();
-		}*/
-	
 		//validate commitment mac
 		if (!Arrays.equals(mac.doFinal(hb), otherMacb)){
 			this.otherDecommitment = null;
@@ -224,12 +160,7 @@ public class CryptoCommitmentObject{
 		this.otherA = otherAb;
 		this.otherX = otherXb;
 		this.otherB = new BigInteger(1,otherBb);
-		/*byte[] tmpBytes = new byte[xLength];
-		tmpBytes[0] = (byte)128;
-		for (int i = 1; i < tmpBytes.length; i++){
-			tmpBytes[i] = 0;
-		}*/
-		this.otherMessage = this.otherB.add(bigA.multiply(bigX)).mod(new BigInteger("2").pow(xLength*8));//.add(new BigInteger(tmpBytes));
+		this.otherMessage = this.otherB.add(bigA.multiply(bigX)).mod(new BigInteger("2").pow(xLength*8));
 
 		Arrays.fill(otherMacb, (byte) 0);
 		Arrays.fill(otherHb, (byte) 0);
