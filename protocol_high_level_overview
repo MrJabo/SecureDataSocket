@@ -66,4 +66,20 @@ Server <----- randomNumberB -------- Client
 Server ------ randomNumberB+1 -----> Client
 
 After this exchange the numbers are compared with the expected results. If a unexpected result was received the connection is closed.
-Since the AES-128, used in for the encryption, uses a MAC only one check (randomNumberA or randomNumberB) should be enough. We used both.
+Since the AES-128, used for the encryption, uses a MAC only one check (randomNumberA or randomNumberB) should be enough. We used both.
+
+
+
+The padding in FDESocket is realized by two Headerbytes added to each paket before encryption
+
+------------- Byte 0 -----------++------------- Byte 1 ------------++--- payload
+b_0 b_1 b_2 b_3 b_4 b_5 b_6 b_7 || b_8 b_9 b_A b_B b_C b_D b_E b_F
+
+if b_8 == 1: this is the last packet of this data Block
+
+length of used bytes in this packet is encoded in the following way (in big-endian):
+b_9 b_A b_B b_C b_D b_E b_F b_0 b_1 b_2 b_3 b_4 b_5 b_6 b_7
+
+Because of the limited number of length-bits, the Payloadsize has a max. length of 32767 bytes.
+
+If not all payloadbytes are used, the unused bytes are filled with random values
