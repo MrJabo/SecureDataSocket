@@ -39,66 +39,17 @@ public class SecureDataSocket {
 		this.port = port;
 	}
 
-	/**
-	 * setup client with commitmentscheme.
-	 * connectionDetails have to look like ipAddress:port
-	 *
-	 * compare the returned String with the one on the other device. call comparedPhrases(stringsWereEqual) afterwards.
-	 * */
-	public String setupClientNoCamera(String connectionDetails) throws SecureDataSocketException {
-		//commitment
-		try{ 
-			this.socket = new FDESocket(new Channel(ChannelType.WLAN, connectionDetails));
-			this.socket.connect();
-			return byteArrayToPhrase(this.socket.getOOB());
-		} catch(Exception e) {
-			throw new SecureDataSocketException(e.toString(), e);
-		}
-	}
-
-	/**
-	 * compare
-	 * */
-	public void comparedPhrases(boolean phrasesMatched) throws SecureDataSocketException {
-		if (phrasesMatched) {
-			try{
-				this.socket.verifiedOOB();
-			} catch(Exception e) {
-				throw new SecureDataSocketException(e.toString(), e);
-			}
-		}
-		else {
-			this.close();
-		}
-	}
-
+			
 	/**
 	 * setup client with already known sharedSecret.
 	 * connectionDetails have to look like ipAddress:port:sharedSecret
 	 *
 	 * Connection established afterwards.
 	 * */
-	public void setupClientWithCamera(String connectionDetails) throws SecureDataSocketException {
+	public void setupClient(String connectionDetails) throws SecureDataSocketException {
 		try {
-			this.socket = new FDESocket(new Channel(ChannelType.MANUAL, connectionDetails));
+			this.socket = new FDESocket(new Channel(connectionDetails));
 			this.socket.connect();
-		} catch(Exception e) {
-			throw new SecureDataSocketException(e.toString(), e);
-		}
-	}
-
-
-	/**
-	 * setup Server with commitmentscheme.
-	 * Method blocks until a client connected.
-	 *
-	 * compare the returned String with the one on the other device. call comparedPhrases(stringsWereEqual) afterwards.
-	 * */
-	public String setupServerNoClientCamera() throws SecureDataSocketException {
-		try{	
-			this.socket = new FDESocket(new Channel(ChannelType.WLAN, ":"));
-			this.socket.listen(this.port);
-			return byteArrayToPhrase(this.socket.getOOB());
 		} catch(Exception e) {
 			throw new SecureDataSocketException(e.toString(), e);
 		}
@@ -110,9 +61,9 @@ public class SecureDataSocket {
 	 *
 	 * returns the connectiondetails and the sharedSecret, that has to be transferred securely to the client by the user.
 	 * */
-	public String prepareServerWithClientCamera() throws SecureDataSocketException {
+	public String prepareServer() throws SecureDataSocketException {
 		try {
-			this.socket = new FDESocket(new Channel(ChannelType.MANUAL, "::"));
+			this.socket = new FDESocket(new Channel("::"));
 			return getIPAddress(true) + ":" + this.port + ":" + this.socket.createSharedSecret();
 		} catch(Exception e) {
 			throw new SecureDataSocketException(e.toString(), e);
@@ -123,35 +74,13 @@ public class SecureDataSocket {
 	/**
 	 * Method blocks until a client connected
 	 * */
-	public void setupServerWithClientCamera() throws SecureDataSocketException {
+	public void setupServer() throws SecureDataSocketException {
 		try{
 			this.socket.listen(this.port);
 		} catch(Exception e) {
 			throw new SecureDataSocketException(e.toString(), e);
 		}
 	}
-
-	private String byteArrayToPhrase(byte[] bytes) throws IOException {
-		String out = "";
-
-		for(int index = 0; index < 3; index++) {
-			int dictIndex = 2*index;
-			int lower = bytes[index] & 0x0f;
-			int upper = (bytes[index] & 0xf0) >> 4;
-
-			out = out + Dict.dictionary[dictIndex][upper] + " ";
-			dictIndex = dictIndex + 1;
-
-			if (dictIndex != 5) {
-				out = out + Dict.dictionary[dictIndex][lower] + " ";
-			} else {
-				out = out + Dict.dictionary[dictIndex][lower] + ".";
-			}
-		}
-
-		return out;
-	}
-
 	
 	public byte[] read() throws SecureDataSocketException {
 		byte[] read;

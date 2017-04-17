@@ -33,7 +33,7 @@ public class SecureDataSocketClientMANUAL{
 			System.out.println("insert connectionDetails printed by the server");
 			String details = reader.next();
 			SecureDataSocket cs = new SecureDataSocket(4711);
-			cs.setupClientWithCamera(details); //insert the output of the server here
+			cs.setupClient(details); //insert the output of the server here
 
 			byte[] testb = cs.read();
 			System.out.println("Read!");

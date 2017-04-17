@@ -95,53 +95,12 @@ public class CryptoObject {
 			throw new CryptoSocketException("shortAuthenticationStringSize,iv_size and tag_size must be a positive number!");
 		}
 
-		try{
-			X9ECParameters ecP = CustomNamedCurves.getByName(curve);
-			org.bouncycastle.jce.spec.ECParameterSpec ecGenSpec = new org.bouncycastle.jce.spec.ECParameterSpec(ecP.getCurve(), ecP.getG(), ecP.getN(), ecP.getH(), ecP.getSeed());
-			this.provider = new BouncyCastleProvider();
-			KeyPairGenerator g = KeyPairGenerator.getInstance(enc_algorithm, this.provider);
-			this.random = new SecureRandom();
-			g.initialize(ecGenSpec, this.random);
-			this.encKeypair = g.generateKeyPair();
-
-			if (this.encKeypair == null){
-				throw new CryptoSocketException("Unable to create new key pair!");
-			}
-
-			this.OOB = new byte[shortAuthenticationStringSize];
-			this.random.nextBytes(this.OOB);
-		} catch(NoSuchAlgorithmException nsa){
-			throw new CryptoSocketException("Algorithm is not supported!");
-		} catch(InvalidAlgorithmParameterException iap){
-			throw new CryptoSocketException("Wrong parameter for algorithm!");
-		}
-
 		this.enc_algorithm = enc_algorithm;
 		this.curve = curve;
 		this.iv_size = iv_size;
 		this.tag_size = tag_size;
 	}
 
-	/**
-	* Merge out of band challange.
-	* For e.g. short authentication string this would merge the two strings together, that Alice and Bob should have the same string.
-	* partner string from the other party.
-	*/
-	public void mergeOOB(byte[] partner) throws CryptoSocketException, IllegalStateException {
-		if (this.OOB.length != partner.length){
-			throw new CryptoSocketException("out of band challange has not the same length!");
-		}
-
-		if (this.merged){
-			throw new IllegalStateException("you already merged the OOB challanges! You can't merge them twice!");
-		}
-
-		for(int i = 0; i < this.OOB.length; i++){
-			this.OOB[i] = (byte) ((int) this.OOB[i] ^ (int) partner[i]);
-		}
-
-		this.merged = true;
-	}
 
 	/**
 	* Get encryption offset (iv_size + tag_size)
@@ -150,112 +109,7 @@ public class CryptoObject {
 		return this.iv_size + this.tag_size;
 	}
 
-	/**
-	* Returns out of band challange, if merged, otherwise null.
-	*/
-	public byte[] getOOB(){
-		if (this.merged){
-			return this.OOB;
-		} else {
-			return null;
-		}
-	}
-
-	/**
-	* Get merge state.
-	*/
-	public boolean getMergeStatus(){
-		return this.merged;
-	}
-
-	/**
-	* Create new commitment for protocol exchange.
-	*/
-	public void createCryptoCommitment() throws CryptoSocketException, InvalidKeyException, NoSuchAlgorithmException {
-		BCECPublicKey pk = (BCECPublicKey) (this.encKeypair.getPublic());
-		int publicKeySize = pk.getQ().getEncoded(true).length - 1;
-		byte[] message = new byte[publicKeySize + this.OOB.length];
-		System.arraycopy(pk.getQ().getEncoded(true), 1, message, 0, publicKeySize);
-		System.arraycopy(this.OOB, 0, message, publicKeySize, this.OOB.length);
-		this.cc = new CryptoCommitmentObject(message);
-	}
-
-	/**
-	* Get commitment object.
-	*/
-	public CryptoCommitmentObject getCryptoCommitment(){
-		return this.cc;
-	}
-
-	/**
-	* Open commitment and extract message to create shared secret.
-	*/
-	public void openCommitmentAndCreateSharedSecret(byte [] decommitment) throws CryptoSocketException, InvalidKeyException, NoSuchAlgorithmException{
-		this.cc.open(decommitment);
-
-		try{
-			BCECPublicKey mypk = (BCECPublicKey) (this.encKeypair.getPublic());
-			int publicKeySize = mypk.getQ().getEncoded(true).length - 1;
-			byte[] message =  this.cc.getOtherMessage();
-
-			if (message.length != publicKeySize + this.OOB.length){
-				throw new CryptoSocketException("Message size is wrong!");
-			}
-
-			byte[] otherPK = new byte[publicKeySize + 1];
-
-			//compressed encoding magic byte
-			otherPK[0] = (byte) 0x02;
-			byte[] otherOOB = new byte[this.OOB.length];
-			System.arraycopy(message, 0, otherPK, 1, publicKeySize);
-			System.arraycopy(message, publicKeySize, otherOOB, 0, otherOOB.length);
-			X9ECParameters ecP = CustomNamedCurves.getByName(curve);
-			org.bouncycastle.jce.spec.ECParameterSpec ecGenSpec = new org.bouncycastle.jce.spec.ECParameterSpec(ecP.getCurve(), ecP.getG(), ecP.getN(), ecP.getH());
-			//ECNamedCurveParameterSpec ecP = ECNamedCurveTable.getParameterSpec(this.curve);
-			ECPublicKeySpec pubKey = new ECPublicKeySpec(ecP.getCurve().decodePoint(otherPK), ecGenSpec);
-			KeyFactory kf = KeyFactory.getInstance(this.enc_algorithm, new BouncyCastleProvider());
-			ECPublicKey pk = (ECPublicKey) kf.generatePublic(pubKey);
-			createSharedEncKey(pk);
-			mergeOOB(otherOOB);
-		} catch(NoSuchAlgorithmException nsa){
-			throw new CryptoSocketException("Algorithm is not supported!");
-		} catch(InvalidKeySpecException iks){
-			throw new CryptoSocketException("Wrong parameter for algorithm!");
-		}
-	}
-
-	/**
-	* Performs ECDH
-	*/
-	public void createSharedEncKey(ECPublicKey key) throws CryptoSocketException {
-		try {
-			X9ECParameters ecP = CustomNamedCurves.getByName(curve);
-			ECDomainParameters ecdp = new ECDomainParameters(ecP.getCurve(), ecP.getG(), ecP.getN(), ecP.getH());
-			ECPublicKeyParameters ecpkp = new ECPublicKeyParameters(key.getQ(), ecdp);
-			BCECPrivateKey sk = (BCECPrivateKey) this.encKeypair.getPrivate();
-			ECPrivateKeyParameters ecskp = new ECPrivateKeyParameters(sk.getD() , ecdp);
-			ECDHCBasicAgreement ba = new ECDHCBasicAgreement();
-			ba.init(ecskp);
-			byte[] byteSharedSecret = ba.calculateAgreement(ecpkp).toByteArray();
-			byte[] byteSharedSecretSecond = new byte[byteSharedSecret.length/2];
-			byte[] byteSharedSecretFirst = new byte[byteSharedSecret.length/2];
-			System.arraycopy(byteSharedSecret, 0, byteSharedSecretSecond, 0, byteSharedSecretSecond.length);
-			System.arraycopy(byteSharedSecret, byteSharedSecretSecond.length, byteSharedSecretFirst, 0, byteSharedSecretFirst.length);
-			this.sharedSecretFirst = new SecretKeySpec(byteSharedSecretFirst, "AES");
-			this.sharedSecretSecond = new SecretKeySpec(byteSharedSecretSecond, "AES");
-			this.has_symmetric_key = true;
-			this.enc = Cipher.getInstance("AES/GCM/NoPadding");
-			this.dec = Cipher.getInstance("AES/GCM/NoPadding");
-		} catch(IllegalStateException is){
-			throw new CryptoSocketException("unable to create shared encryption key, wrong state!");
-		} catch(NoSuchAlgorithmException nsa){
-			throw new CryptoSocketException("Encryption algorithm not found!");
-		} catch (NoSuchPaddingException nsp){
-			throw new CryptoSocketException("Invalid padding algorithm!");
-		} 
-	}
-
-
+	
 	/**
 	 * set a already known sharedsecret, instead of using commitment to create one
 	 * */

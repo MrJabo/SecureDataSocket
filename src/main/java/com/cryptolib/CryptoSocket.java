@@ -72,9 +72,11 @@ public class CryptoSocket implements CryptoSocketInterface {
 		}
 
 		public SocketAddress listen(int port) throws IOException, SocketTimeoutException, CryptoSocketException {
-			if (this.channel.type == ChannelType.WLAN){
+			if (!this.verified) {
+				throw new CryptoSocketException("call setSharedSecret or createSharedSecret before listen");
+			}
+			else {	
 				this.server = new ServerSocket(port);
-				this.createCryptoObject();
 				this.running = true;
 				while(this.running){
 					while (this.running){
@@ -86,201 +88,108 @@ public class CryptoSocket implements CryptoSocketInterface {
 						}
 
 						break;
-					}
+					}	
 
 					//System.out.println("Begin crypto protocol..");
 					// begin crypto protocol
 					this.out = this.socket.getOutputStream();
 					this.in = this.socket.getInputStream();
-
-					if (!this.setup()){
-						continue;
-					}
-
-					if (!this.exchange()){
-						continue;
-					}
-
 					this.connected = true;
+					//check if the same sharedSecret was used
+					byte[] check = new byte[1];
+					new SecureRandom().nextBytes(check);
+					try{
+						this.write(check);
+					}
+					catch(UnverifiedException e){	
+						throw new CryptoSocketException("impossible Error while sharedSecret check");
+					}
+					byte[] ans = new byte[1];
+					this.read(true, ans);
+					byte[] check2 = new byte[1];
+					this.read(true, check2);
+					check2[0] += 1;
+					try{
+						this.write(check2);
+					}
+					catch(UnverifiedException e){	
+						throw new CryptoSocketException("impossible Error while sharedSecret check");
+					}
+					if (check[0]+1 != ans[0]) {
+						this.connected = false;
+						throw new CryptoSocketException("not the same sharedSecret is used. maybe the wrong device connected to you");
+					}
 					break;
 				}
 				return this.socket.getRemoteSocketAddress();
 			}
-			if (this.channel.type == ChannelType.MANUAL) {
-				if (!this.verified) {
-					throw new CryptoSocketException("call setSharedSecret or createSharedSecret before listen, if the ChannelType MANUAL is used.");
-				}
-				else {	
-					this.server = new ServerSocket(port);
-					this.running = true;
-					while(this.running){
-						while (this.running){
-							this.socket = this.server.accept();
-
-							if (!(this.channel.id.equals("") || this.channel.id.equals(":") || this.channel.id.equals("::")) && !this.channel.id.equals(socket.getRemoteSocketAddress().toString())){
-								socket.close();
-								continue;
-							}
-
-							break;
-						}	
-
-						//System.out.println("Begin crypto protocol..");
-						// begin crypto protocol
-						this.out = this.socket.getOutputStream();
-						this.in = this.socket.getInputStream();
-						this.connected = true;
-						//check if the same sharedSecret was used
-						byte[] check = new byte[1];
-						new SecureRandom().nextBytes(check);
-						try{
-							this.write(check);
-						}
-						catch(UnverifiedException e){	
-							throw new CryptoSocketException("impossible Error while sharedSecret check");
-						}
-						byte[] ans = new byte[1];
-						this.read(true, ans);
-						byte[] check2 = new byte[1];
-						this.read(true, check2);
-						check2[0] += 1;
-						try{
-							this.write(check2);
-						}
-						catch(UnverifiedException e){	
-							throw new CryptoSocketException("impossible Error while sharedSecret check");
-						}
-						if (check[0]+1 != ans[0]) {
-							this.connected = false;
-							throw new CryptoSocketException("not the same sharedSecret is used. maybe the wrong device connected to you");
-						}
-						break;
-					}
-					return this.socket.getRemoteSocketAddress();
-				}
-			}
-			return null;
 		}
 
-		public boolean connect() throws CryptoSocketException, IOException, SocketTimeoutException {
-			if (this.channel.type == ChannelType.WLAN){
-				this.createCryptoObject();
+		public boolean connect() throws CryptoSocketException, IOException, SocketTimeoutException {	
+			if (!this.channel.id.equals("")){
+				String tmp = new StringBuilder(this.channel.id).reverse().toString();
 
-				if (!this.channel.id.equals("")){
-					String tmp = new StringBuilder(this.channel.id).reverse().toString();
-
-					if (!tmp.contains(":")){
-						throw new CryptoSocketException("for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
-					}
-
-					String[] stringParts = tmp.split(":", 2);
-
-
-					if (2 != stringParts.length){
-						throw new CryptoSocketException("for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
-					}
-
-					stringParts[0] = new StringBuilder(stringParts[0]).reverse().toString();
-					stringParts[1] = new StringBuilder(stringParts[1]).reverse().toString();
-					String serveraddress = stringParts[1];
-					String port = stringParts[0];
-					InetSocketAddress address = null;
-
-					try {
-						address = new InetSocketAddress(serveraddress, Integer.parseInt(port));
-					} catch (Exception e) {
-						throw new CryptoSocketException("for a WLAN channel the identifier needs to be ip port combination e.g. 127.0.0.1:1337 or ::1:4711");
-					}
-
-					this.socket = new Socket(address.getHostString(), address.getPort());
-				} else {
-					//Search server via broadcast
-					//TODO implement
-					//while not implemented throw Exception
-					throw new CryptoSocketException("Serversearch via broadcast is not implemented at the Moment.");
-				}
-
-				// begin crypto protocol
-				//System.out.println("Begin crypto protocol..");
-				this.out = this.socket.getOutputStream();
-				this.in = this.socket.getInputStream();
-				if (!this.setup()){
-					return false;
-				}
-
-				if (!this.exchange()){
-					return false;
-				}
-
-				this.connected = true;
-				return true;
-			}
-			if (this.channel.type == ChannelType.MANUAL) {
-				if (!this.channel.id.equals("")){
-					String tmp = new StringBuilder(this.channel.id).reverse().toString();
-
-					if (!tmp.contains(":")){
-						throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
-					}
-
-					String[] stringParts = tmp.split(":", 3);
-
-
-					if (3 != stringParts.length){
-						throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
-					}
-
-					stringParts[0] = new StringBuilder(stringParts[0]).reverse().toString();
-					stringParts[1] = new StringBuilder(stringParts[1]).reverse().toString();
-					stringParts[2] = new StringBuilder(stringParts[2]).reverse().toString();
-					this.setSharedSecret(stringParts[0]);
-					String serveraddress = stringParts[2];
-					String port = stringParts[1];
-					InetSocketAddress address = null;
-
-					try {
-						address = new InetSocketAddress(serveraddress, Integer.parseInt(port));
-					} catch (Exception e) {
-						throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
-					}
-
-					this.socket = new Socket(address.getHostString(), address.getPort());
-				} else {
+				if (!tmp.contains(":")){
 					throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
 				}
 
-				// begin crypto protocol
-				//System.out.println("Begin crypto protocol..");
-				this.out = this.socket.getOutputStream();
-				this.in = this.socket.getInputStream();
-				this.connected = true;
-				//check if the same sharedSecret was used
-				byte[] check = new byte[1];
-				this.read(true, check);
-				check[0] += 1;
-				try{
-					this.write(check);
+				String[] stringParts = tmp.split(":", 3);
+
+
+				if (3 != stringParts.length){
+					throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
 				}
-				catch(UnverifiedException e){	
-					throw new CryptoSocketException("impossible Error while sharedSecret check");
+
+				stringParts[0] = new StringBuilder(stringParts[0]).reverse().toString();
+				stringParts[1] = new StringBuilder(stringParts[1]).reverse().toString();
+				stringParts[2] = new StringBuilder(stringParts[2]).reverse().toString();
+				this.setSharedSecret(stringParts[0]);
+				String serveraddress = stringParts[2];
+				String port = stringParts[1];
+				InetSocketAddress address = null;
+
+				try {
+					address = new InetSocketAddress(serveraddress, Integer.parseInt(port));
+				} catch (Exception e) {
+					throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
 				}
-				check = new byte[1];
-				new SecureRandom().nextBytes(check);
-				try{
-					this.write(check);
-				}
-				catch(UnverifiedException e){	
-					throw new CryptoSocketException("impossible Error while sharedSecret check");
-				}
-				byte[] ans = new byte[1];
-				this.read(true, ans);
-				if (ans[0] != check[0]+1){
-					this.connected = false;
-					throw new CryptoSocketException("not the same sharedSecret is used. maybe you connected to the wrong device");
-				}
-				return true;
+				
+				this.socket = new Socket(address.getHostString(), address.getPort());
+				
+			} else {
+				throw new CryptoSocketException("for a MANUAL channel the identifier needs to be ip-port-sharedsecret combination e.g. 127.0.0.1:1337:mySharedSecretMySharedSecret1234 or ::1:4711:mySharedSecretMySharedSecret1234");
 			}
-			return false;
+
+			// begin crypto protocol
+			//System.out.println("Begin crypto protocol..");
+			this.out = this.socket.getOutputStream();
+			this.in = this.socket.getInputStream();
+			this.connected = true;
+			//check if the same sharedSecret was used
+			byte[] check = new byte[1];
+			this.read(true, check);
+			check[0] += 1;
+			try{
+				this.write(check);
+			}
+			catch(UnverifiedException e){	
+				throw new CryptoSocketException("impossible Error while sharedSecret check");
+			}
+			check = new byte[1];
+			new SecureRandom().nextBytes(check);
+			try{
+				this.write(check);
+			}
+			catch(UnverifiedException e){	
+				throw new CryptoSocketException("impossible Error while sharedSecret check");
+			}
+			byte[] ans = new byte[1];
+			this.read(true, ans);
+			if (ans[0] != check[0]+1){
+				this.connected = false;
+				throw new CryptoSocketException("not the same sharedSecret is used. maybe you connected to the wrong device");
+			}
+			return true;
 		}
 
 		private boolean setup() throws IOException{
@@ -360,149 +269,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 			return true;
 		}
 
-		private boolean exchange() throws IOException, CryptoSocketException {
-			byte [] commitment = this.cobject.getCryptoCommitment().getCommitment();
-			byte [] otherCommitment = new byte[this.cobject.getCryptoCommitment().commitmentSize()];
-			this.out.write(commitment);
-			this.out.flush();
-
-
-			for(int sleeptime = 0; sleeptime < 5; sleeptime++){
-				if (otherCommitment.length <= this.in.available()){
-					break;
-				}
-
-				try{
-					TimeUnit.SECONDS.sleep(1);
-				} catch(InterruptedException ie){
-					return false;
-				}
-			}
-
-			int readSize = 0;
-			int count = 0;
-
-			if (otherCommitment.length > this.in.available()){
-				this.createCryptoObject();
-				return false;
-			}
-
-			while (readSize < otherCommitment.length){
-				count = this.in.read(otherCommitment, readSize, otherCommitment.length - readSize);
-
-				if (0 > count){
-					this.createCryptoObject();
-					return false;
-				}
-
-				readSize = readSize + count;
-			}
-
-			if (readSize != otherCommitment.length){
-				this.createCryptoObject();
-				return false;
-			}
-
-			try {
-				this.cobject.getCryptoCommitment().addOtherCommitment(otherCommitment);
-			} catch(CryptoSocketException ia){
-				this.createCryptoObject();
-				return false;
-			}
-
-			byte [] decommitment = this.cobject.getCryptoCommitment().getDecommitment();
-			byte [] otherDecommitment = new byte[this.cobject.getCryptoCommitment().decommitmentSize()];
-			this.out.write(decommitment, 0, decommitment.length);
-			this.out.flush();
-			readSize = 0;
-
-			for(int sleeptime = 0; sleeptime < 5; sleeptime++){
-				if (otherDecommitment.length == this.in.available()){
-					break;
-				}
-
-				try{
-					TimeUnit.SECONDS.sleep(1);
-				} catch(InterruptedException ie){
-					return false;
-				}
-			}
-
-			if (otherDecommitment.length != this.in.available()){
-				this.createCryptoObject();
-				return false;
-			}
-
-			while(readSize < otherDecommitment.length){
-				count = this.in.read(otherDecommitment, readSize, otherDecommitment.length - readSize);
-				
-				if (0 > count){
-					this.createCryptoObject();
-					return false;
-				}
-
-				readSize = readSize + count;
-			}
-
-			if (readSize != otherDecommitment.length){
-				this.createCryptoObject();
-				return false;
-			}
-
-			try {
-				//System.out.println("Opening..");
-				this.cobject.openCommitmentAndCreateSharedSecret(otherDecommitment);
-			} catch(CryptoSocketException ia){
-				this.createCryptoObject();
-				ia.printStackTrace();
-				return false;
-			} catch(InvalidKeyException ike){
-				ike.printStackTrace();
-			 	this.createCryptoObject();
-			 	return false;
-			 } catch(NoSuchAlgorithmException nsa){
-			 	nsa.printStackTrace();
-			 	this.createCryptoObject();
-				return false;
-			}
-
-			return true;
-		}
-
-		private void createCryptoObject() throws CryptoSocketException {
-			this.cobject = new CryptoObject();
-			try {
-				this.cobject.createCryptoCommitment();
-			} catch(InvalidKeyException ike){
-				throw new CryptoSocketException("cannot create commitment!");
-			} catch(NoSuchAlgorithmException nsa){
-				throw new CryptoSocketException("cannot create commitment!");
-			}
-		}
-
-		public byte[] getOOB() throws IllegalStateException, CryptoSocketException {
-			if (this.channel.type != ChannelType.WLAN)	
-				throw new CryptoSocketException("only usable with ChannelType.WLAN");
-			if (this.connected){
-				return this.cobject.getOOB();
-			} else {
-				throw new IllegalStateException("not connected, call listen() or connect() first!");
-			}
-		}
-
-		public void verifiedOOB() throws IllegalStateException, CryptoSocketException{
-			if (this.channel.type != ChannelType.WLAN)	
-				throw new CryptoSocketException("only usable with ChannelType.WLAN");
-			if (this.connected){
-				this.verified = true;
-			} else {
-				throw new IllegalStateException("not connected, call listen() or connect() first!");
-			}
-		}
-
 		private void setSharedSecret(String sharedSecret) throws CryptoSocketException, IOException {
-			if (this.channel.type != ChannelType.MANUAL)
-				throw new CryptoSocketException("only usable with ChannelType.MANUAL");
 			this.cobject = new CryptoObject();
 			byte[] byteSharedSecret = Base64.decode(sharedSecret);
 			this.cobject.setSharedSecret(byteSharedSecret);
@@ -510,8 +277,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 		}
 
 		public String createSharedSecret() throws CryptoSocketException, IOException {
-			if (this.channel.type != ChannelType.MANUAL)
-				throw new CryptoSocketException("only usable with ChannelType.MANUAL");
 			//create sharedsecret
 			byte[] byteSharedSecret = new byte[32];
 			SecureRandom rand = new SecureRandom();

@@ -71,10 +71,6 @@ public class FDESocket {
 		return cryptoSocket.connect();
 	}
 
-	public byte[] getOOB() throws IllegalStateException, CryptoSocketException {
-		return cryptoSocket.getOOB();
-	}
-
 	public String createSharedSecret() throws CryptoSocketException, IOException {
 		return cryptoSocket.createSharedSecret();
 	}
@@ -82,10 +78,6 @@ public class FDESocket {
 	//public void setSharedSecret(byte [] sharedSecret) throws CryptoSocketException {
 	//	cryptoSocket.setSharedSecret(sharedSecret);
 	//}
-
-	public void verifiedOOB() throws IllegalStateException, CryptoSocketException {
-		cryptoSocket.verifiedOOB();
-	}
 
 	public byte[] read() throws CryptoSocketException, IllegalStateException, IOException {
 		boolean done = false;

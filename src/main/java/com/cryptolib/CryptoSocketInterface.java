@@ -63,11 +63,9 @@ public interface CryptoSocketInterface {
 		 *              |                             | be set.
 		 * */
 		public final String id;
-		public final ChannelType type; 
 
-		public Channel(ChannelType type, String id) {
+		public Channel(String id) {
 			this.id = id;
-			this.type = type;
 		}
 	}
 
@@ -111,25 +109,6 @@ public interface CryptoSocketInterface {
 	* returns if connection is established
 	*/
 	boolean connect() throws CryptoSocketException, IOException, SocketTimeoutException;
-
-	/**
-	* Return the OutOfBand information.
-	* IMPORTANT: This has to be the same between both 
-	* communicationpartners. If it differs, NEVER call verifiedOOB()!
-	* Usable with ChannelType.WLAN
-	*/
-	byte[] getOOB() throws IllegalStateException, CryptoSocketException;
-	
-	/**
-	* Confirmation, that the other side is the one we expected.
-	* Use getOOB() for comparison, between both partners. 
-	* IMPORTANT: when calling verifiedOOB() you sign, that you verified the
-	* communicationpartner is the one you expect. If you call verifiedOOB() 
-	* though your verificationresult is false, an adversary will be able to
-	* read and manipulate your communication.
-	* Usable with ChannelType.WLAN
-	*/
-	void verifiedOOB() throws IllegalStateException, CryptoSocketException;
 
 	/**
 	 * Sets the SharedSecret.
