@@ -66,7 +66,6 @@ public class CryptoObject {
 	private byte[] OOB = null;
 	private boolean merged = false;
 	private boolean has_symmetric_key = false;
-	private CryptoCommitmentObject cc = null;
 	private SecureRandom random = null;
 	private int iv_size = 16;
 	private int tag_size = 32;
