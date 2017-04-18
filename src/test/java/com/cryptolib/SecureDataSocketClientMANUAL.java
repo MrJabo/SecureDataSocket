@@ -18,7 +18,6 @@ package com.cryptolib;
 
 import com.cryptolib.CryptoSocketInterface;
 import com.cryptolib.CryptoSocketInterface.Channel;
-import com.cryptolib.CryptoSocketInterface.ChannelType;
 import com.cryptolib.CryptoSocket;
 import com.cryptolib.SecureDataSocket;
 import java.util.Arrays;

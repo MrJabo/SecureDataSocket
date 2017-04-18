@@ -23,17 +23,6 @@ import java.io.IOException;
 
 public interface CryptoSocketInterface {
 
-	public enum ChannelType {
-		/**
-		 * A Commitmentscheme will be used to create a sharedSecret. Therefore a OOB is created. which has to be compared.
-		 * Method to get the OOB is called getOOB().
-		 * Method to sign the OOBs of both sides equal is verifiedOOB().
-		 * These Methods have to be called AFTER a networkconnection has been established (via listen or connect), because the connection will be required for the commitmentscheme.
-		 * The networkconnection will be fully usable after verifiedOOB() has been called.
-		 *
-		 * Methods setSharedSecret(byte[] sharedSecret) and createSharedSecret() will be unnecassary here.
-		 * */
-		WLAN, 
 		/**
 		 * A sharedSecret will be created and given to the user. The User has to transfer it securely (!!!) to the partnerdevice.
 		 * Once a sharedSecret is known by both devices a networkconnection can be established. I.e. a sharedSecret has not to be created on both sides.
@@ -41,26 +30,17 @@ public interface CryptoSocketInterface {
 		 * Method to set the sharedSecret in the partnerdevice is called setSharedSecret(byte[] sharedSecret).
 		 * These Methods have to be called BEFORE a networkconnection has been established (via listen or connect), because the sharedSecret will be used for the Crypto.
 		 * The networkconnection will be fully usable afert it has been established.
-		 * 
-		 * Methods getOOB() and verifiedOOB() will be unnecassary here.
 		 * */
-		MANUAL;	
-	}
 
 	public class Channel {
 		/**
 		 * definitions of id.
 		 *
-		 *  ChannelType | id                          | Description
-		 * -------------+-----------------------------+--------------------------------------------
-		 *  WLAN        | ipAddress:Port              | OOBChannel and networkChannel are the same.
-		 *              |                             | ipAddress is optional in future versions 
-		 *              |                             | beause then the partnerdevice may be found 
-		 *              |                             | via broadcast.
-		 *              |                             |
-		 *  MANUAL      | ipAddress:Port:sharedSecret | only the networkChannel is defined here.
-		 *              |                             | If used as a client the sharedSecret has to
-		 *              |                             | be set.
+		 *  id                          | Description
+		 * -----------------------------+--------------------------------------------
+		 *  ipAddress:Port:sharedSecret | only the networkChannel is defined here.
+		 *                              | If used as a client the sharedSecret has to
+		 *                              | be set.
 		 * */
 		public final String id;
 
