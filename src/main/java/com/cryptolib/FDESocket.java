@@ -33,17 +33,9 @@ import java.net.SocketAddress;
 
 public class FDESocket {
 	//cannot be larger than 32767
-	public /*static*/ final int PAYLOAD_SIZE;
-	public /*static*/ final int PACKET_SIZE;
+	public final int PAYLOAD_SIZE;
+	public final int PACKET_SIZE;
 	private CryptoSocket cryptoSocket;
-	
-	/*public FDESocket(CryptoSocketInterface.Channel c, String id, int payloadSize) throws CryptoSocketException{
-		this.PAYLOAD_SIZE = payloadSize;
-		this.PACKET_SIZE = PAYLOAD_SIZE+2;
-		if (PAYLOAD_SIZE > 32767)
-			throw new CryptoSocketException("to large PAYLOAD_SIZE");
-		cryptoSocket = new CryptoSocket(c, id);
-	}*/
 	
 	public FDESocket(CryptoSocketInterface.Channel c, int payloadSize) throws CryptoSocketException{
 		this.PAYLOAD_SIZE = payloadSize;
@@ -55,10 +47,6 @@ public class FDESocket {
 		cryptoSocket = new CryptoSocket(c);
 	}
 	
-	/*public FDESocket(CryptoSocketInterface.Channel c, String id) throws CryptoSocketException{
-		this(c, id, 1024);
-	}*/
-
 	public FDESocket(CryptoSocketInterface.Channel c) throws CryptoSocketException{
 		this(c, 1024);
 	}
@@ -74,10 +62,6 @@ public class FDESocket {
 	public String createSharedSecret() throws CryptoSocketException, IOException {
 		return cryptoSocket.createSharedSecret();
 	}
-
-	//public void setSharedSecret(byte [] sharedSecret) throws CryptoSocketException {
-	//	cryptoSocket.setSharedSecret(sharedSecret);
-	//}
 
 	public byte[] read() throws CryptoSocketException, IllegalStateException, IOException {
 		boolean done = false;

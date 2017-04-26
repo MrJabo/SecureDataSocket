@@ -18,7 +18,6 @@ package com.cryptolib;
 
 import com.cryptolib.FDESocket;
 import com.cryptolib.CryptoSocketInterface.Channel;
-import com.cryptolib.CryptoSocketInterface.ChannelType;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
