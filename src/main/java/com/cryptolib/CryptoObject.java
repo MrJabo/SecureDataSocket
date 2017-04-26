@@ -188,7 +188,7 @@ public class CryptoObject {
 			throw new IllegalStateException("Have no symmetric key, you need to create a shared secret first!");
 		}
 
-		if (data.length <= this.iv_size + this.tag_size || data == null){
+		if (data == null || data.length <= this.iv_size + this.tag_size){
 			throw new CryptoSocketException("The data are too small for a ciphertext!");
 		}
 
