@@ -27,7 +27,7 @@ public class SecureDataSocketClientWLAN{
 	public static void main(String [] args){
 		try{
 			SecureDataSocket cs = new SecureDataSocket(4711);
-			System.out.println(cs.setupClientNoCamera("192.168.178.34:4711"));
+			System.out.println(cs.setupClientNoCamera("127.0.0.1:4711"));
 	                //Never do this without checking, if the phrases on both devices are the same. If they are different call cs.comparesPhrases(false)
 						cs.comparedPhrases(true);
 

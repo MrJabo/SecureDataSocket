@@ -76,7 +76,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 				this.server = new ServerSocket(port);
 				this.createCryptoObject();
 				this.running = true;
-				while(this.running){
+				while (this.running){
 					while (this.running){
 						this.socket = this.server.accept();
 
@@ -97,13 +97,14 @@ public class CryptoSocket implements CryptoSocketInterface {
 						continue;
 					}
 
-					if (!this.exchange()){
+					if (!this.exchange(false)){
 						continue;
 					}
 
 					this.connected = true;
 					break;
 				}
+
 				return this.socket.getRemoteSocketAddress();
 			}
 			if (this.channel.type == ChannelType.MANUAL) {
@@ -113,49 +114,49 @@ public class CryptoSocket implements CryptoSocketInterface {
 				else {	
 					this.server = new ServerSocket(port);
 					this.running = true;
-					while(this.running){
-						while (this.running){
-							this.socket = this.server.accept();
+					while (this.running){
+						this.socket = this.server.accept();
 
-							if (!(this.channel.id.equals("") || this.channel.id.equals(":") || this.channel.id.equals("::")) && !this.channel.id.equals(socket.getRemoteSocketAddress().toString())){
-								socket.close();
-								continue;
-							}
+						if (!(this.channel.id.equals("") || this.channel.id.equals(":") || this.channel.id.equals("::")) && !this.channel.id.equals(socket.getRemoteSocketAddress().toString())){
+							socket.close();
+							continue;
+						}
 
-							break;
-						}	
-
-						//System.out.println("Begin crypto protocol..");
-						// begin crypto protocol
-						this.out = this.socket.getOutputStream();
-						this.in = this.socket.getInputStream();
-						this.connected = true;
-						//check if the same sharedSecret was used
-						byte[] check = new byte[1];
-						new SecureRandom().nextBytes(check);
-						try{
-							this.write(check);
-						}
-						catch(UnverifiedException e){	
-							throw new CryptoSocketException("impossible Error while sharedSecret check");
-						}
-						byte[] ans = new byte[1];
-						this.read(true, ans);
-						byte[] check2 = new byte[1];
-						this.read(true, check2);
-						check2[0] += 1;
-						try{
-							this.write(check2);
-						}
-						catch(UnverifiedException e){	
-							throw new CryptoSocketException("impossible Error while sharedSecret check");
-						}
-						if (check[0]+1 != ans[0]) {
-							this.connected = false;
-							throw new CryptoSocketException("not the same sharedSecret is used. maybe the wrong device connected to you");
-						}
 						break;
 					}
+
+					//System.out.println("Begin crypto protocol..");
+					// begin crypto protocol
+					this.out = this.socket.getOutputStream();
+					this.in = this.socket.getInputStream();
+					this.connected = true;
+					//check if the same sharedSecret was used
+					byte[] check = new byte[1];
+					new SecureRandom().nextBytes(check);
+
+					try{
+						this.write(check);
+					} catch(UnverifiedException e){
+						throw new CryptoSocketException("impossible Error while sharedSecret check");
+					}
+
+					byte[] ans = new byte[1];
+					this.read(true, ans);
+					byte[] check2 = new byte[1];
+					this.read(true, check2);
+					check2[0] += 1;
+
+					try{
+						this.write(check2);
+					} catch(UnverifiedException e){
+						throw new CryptoSocketException("impossible Error while sharedSecret check");
+					}
+
+					if (check[0]+1 != ans[0]) {
+						this.connected = false;
+						throw new CryptoSocketException("not the same sharedSecret is used. maybe the wrong device connected to you");
+					}
+
 					return this.socket.getRemoteSocketAddress();
 				}
 			}
@@ -208,7 +209,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 					return false;
 				}
 
-				if (!this.exchange()){
+				if (!this.exchange(true)){
 					return false;
 				}
 
@@ -360,47 +361,97 @@ public class CryptoSocket implements CryptoSocketInterface {
 			return true;
 		}
 
-		private boolean exchange() throws IOException, CryptoSocketException {
+		private boolean exchange(boolean client) throws IOException, CryptoSocketException {
 			byte [] commitment = this.cobject.getCryptoCommitment().getCommitment();
 			byte [] otherCommitment = new byte[this.cobject.getCryptoCommitment().commitmentSize()];
-			this.out.write(commitment);
-			this.out.flush();
-
-
-			for(int sleeptime = 0; sleeptime < 5; sleeptime++){
-				if (otherCommitment.length <= this.in.available()){
-					break;
-				}
-
-				try{
-					TimeUnit.SECONDS.sleep(1);
-				} catch(InterruptedException ie){
-					return false;
-				}
-			}
-
 			int readSize = 0;
 			int count = 0;
 
-			if (otherCommitment.length > this.in.available()){
-				this.createCryptoObject();
-				return false;
-			}
+			if (client) {
 
-			while (readSize < otherCommitment.length){
-				count = this.in.read(otherCommitment, readSize, otherCommitment.length - readSize);
+				// send commitment
 
-				if (0 > count){
+				this.out.write(commitment);
+				this.out.flush();
+
+				// wait
+
+				for(int sleeptime = 0; sleeptime < 5; sleeptime++){
+					if (otherCommitment.length <= this.in.available()){
+						break;
+					}
+
+					try{
+						TimeUnit.SECONDS.sleep(1);
+					} catch(InterruptedException ie){
+						return false;
+					}
+				}
+
+				if (otherCommitment.length > this.in.available()){
 					this.createCryptoObject();
 					return false;
 				}
 
-				readSize = readSize + count;
-			}
+				// receive other commitment
 
-			if (readSize != otherCommitment.length){
-				this.createCryptoObject();
-				return false;
+				while (readSize < otherCommitment.length){
+					count = this.in.read(otherCommitment, readSize, otherCommitment.length - readSize);
+
+					if (0 > count){
+						this.createCryptoObject();
+						return false;
+					}
+
+					readSize = readSize + count;
+				}
+
+				if (readSize != otherCommitment.length){
+					this.createCryptoObject();
+					return false;
+				}
+			} else {
+				// wait
+
+				for(int sleeptime = 0; sleeptime < 5; sleeptime++){
+					if (otherCommitment.length <= this.in.available()){
+						break;
+					}
+
+					try{
+						TimeUnit.SECONDS.sleep(1);
+					} catch(InterruptedException ie){
+						return false;
+					}
+				}
+
+				if (otherCommitment.length > this.in.available()){
+					this.createCryptoObject();
+					return false;
+				}
+
+				// receive other commitment
+
+				while (readSize < otherCommitment.length){
+					count = this.in.read(otherCommitment, readSize, otherCommitment.length - readSize);
+
+					if (0 > count){
+						this.createCryptoObject();
+						return false;
+					}
+
+					readSize = readSize + count;
+				}
+
+				if (readSize != otherCommitment.length){
+					this.createCryptoObject();
+					return false;
+				}
+
+				// send commitment
+
+				this.out.write(commitment);
+				this.out.flush();
 			}
 
 			try {
@@ -412,41 +463,94 @@ public class CryptoSocket implements CryptoSocketInterface {
 
 			byte [] decommitment = this.cobject.getCryptoCommitment().getDecommitment();
 			byte [] otherDecommitment = new byte[this.cobject.getCryptoCommitment().decommitmentSize()];
-			this.out.write(decommitment, 0, decommitment.length);
-			this.out.flush();
-			readSize = 0;
 
-			for(int sleeptime = 0; sleeptime < 5; sleeptime++){
-				if (otherDecommitment.length == this.in.available()){
-					break;
+			if (client) {
+
+				// send decommitment
+
+				this.out.write(decommitment, 0, decommitment.length);
+				this.out.flush();
+
+				// wait
+				readSize = 0;
+
+				for(int sleeptime = 0; sleeptime < 5; sleeptime++){
+					if (otherDecommitment.length == this.in.available()){
+						break;
+					}
+
+					try{
+						TimeUnit.SECONDS.sleep(1);
+					} catch(InterruptedException ie){
+						return false;
+					}
 				}
 
-				try{
-					TimeUnit.SECONDS.sleep(1);
-				} catch(InterruptedException ie){
-					return false;
-				}
-			}
-
-			if (otherDecommitment.length != this.in.available()){
-				this.createCryptoObject();
-				return false;
-			}
-
-			while(readSize < otherDecommitment.length){
-				count = this.in.read(otherDecommitment, readSize, otherDecommitment.length - readSize);
-				
-				if (0 > count){
+				if (otherDecommitment.length != this.in.available()){
 					this.createCryptoObject();
 					return false;
 				}
 
-				readSize = readSize + count;
-			}
+				// receive other decommitment
 
-			if (readSize != otherDecommitment.length){
-				this.createCryptoObject();
-				return false;
+				while(readSize < otherDecommitment.length){
+					count = this.in.read(otherDecommitment, readSize, otherDecommitment.length - readSize);
+
+					if (0 > count){
+						this.createCryptoObject();
+						return false;
+					}
+
+					readSize = readSize + count;
+				}
+
+				if (readSize != otherDecommitment.length){
+					this.createCryptoObject();
+					return false;
+				}
+			} else {
+				// wait
+				readSize = 0;
+
+				for(int sleeptime = 0; sleeptime < 5; sleeptime++){
+					if (otherDecommitment.length == this.in.available()){
+						break;
+					}
+
+					try{
+						TimeUnit.SECONDS.sleep(1);
+					} catch(InterruptedException ie){
+						return false;
+					}
+				}
+
+				if (otherDecommitment.length != this.in.available()){
+					this.createCryptoObject();
+					return false;
+				}
+
+				// receive other decommitment
+
+				while(readSize < otherDecommitment.length){
+					count = this.in.read(otherDecommitment, readSize, otherDecommitment.length - readSize);
+
+					if (0 > count){
+						this.createCryptoObject();
+						return false;
+					}
+
+					readSize = readSize + count;
+				}
+
+				if (readSize != otherDecommitment.length){
+					this.createCryptoObject();
+					return false;
+				}
+
+				// send decommitment
+
+				this.out.write(decommitment, 0, decommitment.length);
+				this.out.flush();
 			}
 
 			try {

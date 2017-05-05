@@ -28,6 +28,7 @@ public class SecureDataSocketServerWLAN{
 	public static void main(String [] args){
 		try{
 			SecureDataSocket cs = new SecureDataSocket(4711);
+			System.out.println("SecureDataSocket initialisation finished!");
 			System.out.println(cs.setupServerNoClientCamera());
 			//Never do this without checking, if the phrases on both devices are the same. If they are different call cs.comparesPhrases(false)
 			cs.comparedPhrases(true);
