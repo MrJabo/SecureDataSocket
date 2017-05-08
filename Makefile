@@ -25,11 +25,21 @@ JAR :=cryptolib.jar
 JARFILE := $(shell find . -maxdepth 1 -name '*.jar')
 BINFILES := $(shell find $(BIN) -name '*.class')
 CLASSFILES := $(shell cd $(BIN) && find . -name '*.class')
+
 .SUFFIXES: .java .class
 
 .PHONY: all crytolib test
 
-all: cryptolib test
+all: check_dep cryptolib test
+
+check_dep:
+ifndef JARFILE
+	@echo "Please copy the latest .jar bouncy castle lib into $(PWD)"
+	@echo "You can find the latest lib at https://www.bouncycastle.org/latest_releases.html"
+	@echo "e.g. wget \"https://downloads.bouncycastle.org/java/bcprov-jdk15on-156.jar\""
+	exit 1
+endif
+
 cryptolib:
 	$(JC) -classpath $(JARFILE) $(JFLAGS) $(SOURCES)
 
