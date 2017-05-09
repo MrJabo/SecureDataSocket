@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with SecureDataSocket.  If not, see <http://www.gnu.org/licenses/>
 
 
-Let H be a collision resistent hash function (e.g. SHA-512 is collision resistent for 256 bits (32 byte)) and h a two universal hash function (e.g. h := Ax + B).
+Let H be a collision resistent hash function (e.g. SHA-512 is collision resistent for 256 bits (32 byte)) and h a two universal hash function (e.g. h(x) := Ax + B).
 Let g be a HMac function with security parameter (0,1)^k. Notation: g(x,m) is the tag t for message m with security parameter x.
 
 Commitment scheme:
@@ -25,7 +25,7 @@ Let c be the commitment and d be the decommitment:
 A <- (0,1)^n
 x <- (0,1)^n
 m <- (0,1)^n
-h:=Az + B (mod n)
+m:= h(x) = Ax + B (mod n)
 B:= m - Ax
 c:=<H(x),A,B,g(x,(H(x)||A||B))>
 
