@@ -268,8 +268,8 @@ public class CryptoObject {
 		try {
 			byte[] byteSharedSecretSecond = new byte[sharedSecret.length/2];
 			byte[] byteSharedSecretFirst = new byte[sharedSecret.length/2];
-			System.arraycopy(sharedSecret, 0, byteSharedSecretSecond, 0, byteSharedSecretSecond.length);
-			System.arraycopy(sharedSecret, byteSharedSecretSecond.length, byteSharedSecretFirst, 0, byteSharedSecretFirst.length);
+			System.arraycopy(sharedSecret, 0, byteSharedSecretFirst, 0, byteSharedSecretFirst.length);
+			System.arraycopy(sharedSecret, byteSharedSecretFirst.length, byteSharedSecretSecond, 0, byteSharedSecretSecond.length);
 			this.sharedSecretFirst = new SecretKeySpec(byteSharedSecretFirst, "AES");
 			this.sharedSecretSecond = new SecretKeySpec(byteSharedSecretSecond, "AES");
 			this.has_symmetric_key = true;
