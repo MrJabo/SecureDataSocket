@@ -51,7 +51,11 @@ public class SecureDataSocket {
 		//commitment
 		try{ 
 			this.socket = new FDESocket(new Channel(ChannelType.WLAN, connectionDetails));
-			this.socket.connect();
+
+			if (!this.socket.connect()){
+				throw new Exception("Unable to connect");
+			}
+
 			return byteArrayToPhrase(this.socket.getOOB());
 		} catch(Exception e) {
 			throw new SecureDataSocketException(e.toString(), e);

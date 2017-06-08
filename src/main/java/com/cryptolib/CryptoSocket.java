@@ -76,9 +76,9 @@ public class CryptoSocket implements CryptoSocketInterface {
 		public SocketAddress listen(int port) throws IOException, SocketTimeoutException, CryptoSocketException {
 			if (this.channel.type == ChannelType.WLAN){
 				this.server = new ServerSocket(port);
-				this.createCryptoObject();
 				this.running = true;
 				while (this.running){
+					this.createCryptoObject();
 					while (this.running){
 						this.socket = this.server.accept();
 
@@ -391,7 +391,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 				}
 
 				if (otherCommitment.length > this.in.available()){
-					this.createCryptoObject();
 					return false;
 				}
 
@@ -401,7 +400,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 					count = this.in.read(otherCommitment, readSize, otherCommitment.length - readSize);
 
 					if (0 > count){
-						this.createCryptoObject();
 						return false;
 					}
 
@@ -409,7 +407,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 				}
 
 				if (readSize != otherCommitment.length){
-					this.createCryptoObject();
 					return false;
 				}
 			} else {
@@ -428,7 +425,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 				}
 
 				if (otherCommitment.length > this.in.available()){
-					this.createCryptoObject();
 					return false;
 				}
 
@@ -438,7 +434,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 					count = this.in.read(otherCommitment, readSize, otherCommitment.length - readSize);
 
 					if (0 > count){
-						this.createCryptoObject();
 						return false;
 					}
 
@@ -446,7 +441,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 				}
 
 				if (readSize != otherCommitment.length){
-					this.createCryptoObject();
 					return false;
 				}
 
@@ -459,7 +453,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 			try {
 				this.cobject.getCryptoCommitment().addOtherCommitment(otherCommitment);
 			} catch(CryptoSocketException ia){
-				this.createCryptoObject();
 				return false;
 			}
 
@@ -477,7 +470,7 @@ public class CryptoSocket implements CryptoSocketInterface {
 				readSize = 0;
 
 				for(int sleeptime = 0; sleeptime < 5; sleeptime++){
-					if (otherDecommitment.length == this.in.available()){
+					if (otherDecommitment.length <= this.in.available()){
 						break;
 					}
 
@@ -488,8 +481,9 @@ public class CryptoSocket implements CryptoSocketInterface {
 					}
 				}
 
-				if (otherDecommitment.length != this.in.available()){
-					this.createCryptoObject();
+				//ensure that otherDecommitment.length bytes are available
+
+				if (otherDecommitment.length > this.in.available()){
 					return false;
 				}
 
@@ -499,7 +493,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 					count = this.in.read(otherDecommitment, readSize, otherDecommitment.length - readSize);
 
 					if (0 > count){
-						this.createCryptoObject();
 						return false;
 					}
 
@@ -507,7 +500,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 				}
 
 				if (readSize != otherDecommitment.length){
-					this.createCryptoObject();
 					return false;
 				}
 			} else {
@@ -527,7 +519,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 				}
 
 				if (otherDecommitment.length != this.in.available()){
-					this.createCryptoObject();
 					return false;
 				}
 
@@ -537,7 +528,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 					count = this.in.read(otherDecommitment, readSize, otherDecommitment.length - readSize);
 
 					if (0 > count){
-						this.createCryptoObject();
 						return false;
 					}
 
@@ -545,7 +535,6 @@ public class CryptoSocket implements CryptoSocketInterface {
 				}
 
 				if (readSize != otherDecommitment.length){
-					this.createCryptoObject();
 					return false;
 				}
 
@@ -559,16 +548,13 @@ public class CryptoSocket implements CryptoSocketInterface {
 				//System.out.println("Opening..");
 				this.cobject.openCommitmentAndCreateSharedSecret(otherDecommitment);
 			} catch(CryptoSocketException ia){
-				this.createCryptoObject();
 				ia.printStackTrace();
 				return false;
 			} catch(InvalidKeyException ike){
 				ike.printStackTrace();
-			 	this.createCryptoObject();
 			 	return false;
 			 } catch(NoSuchAlgorithmException nsa){
 			 	nsa.printStackTrace();
-			 	this.createCryptoObject();
 				return false;
 			}
 
