@@ -51,7 +51,7 @@ public class CryptoCommitmentObject{
 
 	public CryptoCommitmentObject(byte[] message) throws CryptoSocketException, InvalidKeyException, NoSuchAlgorithmException {
 		messageLength = message.length;
-		aLength = messageLength;
+		aLength = messageLength*2;
 		xLength = messageLength;
 		this.myMessage = new BigInteger(1,message);
 		SecureRandom random = new SecureRandom();
