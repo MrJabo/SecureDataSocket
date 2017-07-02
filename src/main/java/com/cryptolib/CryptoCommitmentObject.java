@@ -51,7 +51,7 @@ public class CryptoCommitmentObject{
 
 	public CryptoCommitmentObject(byte[] message) throws CryptoSocketException, InvalidKeyException, NoSuchAlgorithmException {
 		messageLength = message.length;
-		aLength = messageLength*2;
+		aLength = messageLength;
 		xLength = messageLength;
 		this.myMessage = new BigInteger(1,message);
 		SecureRandom random = new SecureRandom();
@@ -68,7 +68,7 @@ public class CryptoCommitmentObject{
 		}
 
 		BigInteger x = new BigInteger(1,this.myX);
-		this.myB = myMessage.subtract(a.multiply(x)).mod(new BigInteger("2").pow(xLength*8));
+		this.myB = myMessage.subtract(a.multiply(x)).mod(new BigInteger("1942668892225729070919461906823518906642406839052139521251812409738904285205208498221")).mod(new BigInteger("2").pow(xLength*8));
 		this.mySalt = new byte[saltLength];
 		random.nextBytes(this.mySalt);
 		SecretKey key = new SecretKeySpec(myX, "HmacSHA512");
@@ -162,7 +162,7 @@ public class CryptoCommitmentObject{
 		this.otherA = otherAb;
 		this.otherX = otherXb;
 		this.otherB = new BigInteger(1,otherBb);
-		this.otherMessage = this.otherB.add(bigA.multiply(bigX)).mod(new BigInteger("2").pow(xLength*8));
+		this.otherMessage = this.otherB.add(bigA.multiply(bigX)).mod(new BigInteger("1942668892225729070919461906823518906642406839052139521251812409738904285205208498221")).mod(new BigInteger("2").pow(xLength*8));
 
 		Arrays.fill(otherMacb, (byte) 0);
 		Arrays.fill(otherHb, (byte) 0);
