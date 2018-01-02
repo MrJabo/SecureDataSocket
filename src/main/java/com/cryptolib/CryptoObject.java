@@ -70,8 +70,8 @@ public class CryptoObject {
 	private boolean has_symmetric_key = false;
 	private CryptoCommitmentObject cc = null;
 	private SecureRandom random = null;
-	private int iv_size = 16;
-	private int tag_size = 32;
+	private int iv_size = 12;
+	private int tag_size = 16;
 
 	/** 
 	* Constructor.
@@ -79,7 +79,7 @@ public class CryptoObject {
 	* Short authentication byte length is 3 byte.
 	*/
 	public CryptoObject() throws CryptoSocketException {
-		this("curve25519", "ECDH", 3, 16, 16);
+		this("curve25519", "ECDH", 3, 12, 16);
 	}
 
 	/** 
